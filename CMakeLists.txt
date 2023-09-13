@@ -6,11 +6,24 @@ set(CMAKE_BUILD_TYPE Debug)
 
 set(CMAKE_C_STANDARD 11)
 
-add_subdirectory(extern/sdl2_gfx)
+# check the submodules
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/sdl2_ttf/CMakeLists.txt")
+    message(FATAL_ERROR "The sdl2_ttf submodule was not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+endif()
 
 add_executable(${PROJECT_NAME} main.c)
 
-target_link_libraries(${PROJECT_NAME} sdl2_gfx m)
+add_subdirectory(extern/sdl2_gfx)
+add_subdirectory(extern/sdl2_ttf)
+
+target_include_directories(
+        ${PROJECT_NAME}
+        PUBLIC
+        ${PROJECT_SOURCE_DIR}/extern/sdl2_gfx
+        ${PROJECT_SOURCE_DIR}/extern/sdl2_ttf
+)
+
+target_link_libraries(${PROJECT_NAME} SDL2_gfx SDL2_ttf m)
 
 set(GCC_COMPILE_OPTIONS "-Wall;-Wextra;-pedantic;-std=c11")
 set(GCC_DEBUG_OPTIONS "${GCC_COMPILE_OPTIONS};-g;-O0")

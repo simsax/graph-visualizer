@@ -42,7 +42,7 @@ him for his work.
 #include <stdlib.h>
 #include <string.h>
 
-#include "SDL2/SDL.h"
+#include "SDL.h"
 
 /* Use GCC intrinsics if available: they support both i386 and x86_64,
    provide ASM-grade performances, and lift the PUSHA/POPA issues. */

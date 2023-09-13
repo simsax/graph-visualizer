@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-project(sdl2_gfx)
+project(SDL2_gfx)
 
 set(CMAKE_BUILD_TYPE Release)
 
@@ -14,7 +14,7 @@ add_library(${PROJECT_NAME} STATIC
  SDL2_imageFilter.c
  SDL2_rotozoom.c)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${SDL2_INCLUDE_DIRS})
 
 target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
 

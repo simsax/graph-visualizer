@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <SDL2/SDL.h>
-#include "extern/sdl2_gfx/SDL2_gfxPrimitives.h"
+#include "SDL.h"
+#include "SDL2_gfxPrimitives.h"
+#include "SDL_ttf.h"
 
 #define SCREEN_WIDTH 1920
 #define SCREEN_HEIGHT 1080
@@ -64,18 +65,12 @@ int main(void)
 
         //Render green outlined quad
         SDL_SetRenderDrawColor( renderer, 0x00, 0xFF, 0x00, 0xFF );
-        SDL_Rect outlineRect = { SCREEN_WIDTH / 6, SCREEN_HEIGHT / 6,
-            SCREEN_WIDTH * 2 / 3, SCREEN_HEIGHT * 2 / 3 };
-        SDL_RenderDrawRect( renderer, &outlineRect );
 
         thickLineRGBA(renderer, 0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2, 4,
             0x00, 0x00, 0xFF, 0xFF);
 
-        SDL_SetRenderDrawColor( renderer, 0xFF, 0xFF, 0x00, 0xFF );
-
-        for (int y = 0; y < SCREEN_HEIGHT; y += 1) {
-            SDL_RenderDrawPoint(renderer, SCREEN_WIDTH / 2, y);
-        }
+        filledCircleRGBA(renderer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_HEIGHT / 4,
+            0xFF, 0x00, 0xFF, 0xFF);
 
         SDL_RenderPresent(renderer);
     }
