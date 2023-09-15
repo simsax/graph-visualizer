@@ -1,9 +1,29 @@
 #include "common.h"
-#include "SDL2_gfxPrimitives.h"
-#include "text.h"
+#include "render.h"
+#include "node.h"
 
 #define SCREEN_WIDTH 1920
 #define SCREEN_HEIGHT 1080
+
+int test_node(void) {
+    NodeArray nodes;
+    init_node_array(&nodes);
+    for (size_t i = 0; i < 10; i++) {
+        Node* node = new_node(i, -1, BLACK, 100);
+        add_node(&nodes, node);
+        printf("Iteration %zu, count: %zu, capacity: %zu\n", i, nodes.count, nodes.capacity);
+    }
+
+    printf("== Nodes ==\n");
+    for (size_t i = 0; i < nodes.count; i++) {
+        printf("%d -> \n", nodes.nodes[i]->label);
+    }
+
+    free_node_array(&nodes);
+    printf("\nFreed, count: %zu, capacity: %zu\n", nodes.capacity, nodes.count);
+
+    return 0;
+}
 
 int main(void)
 {
@@ -22,11 +42,15 @@ int main(void)
     SDL_Window* window = SDL(SDL_CreateWindow("Graph Visualizer", SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN));
 
-    SDL_Renderer* renderer
-        = SDL(SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC));
+    init_renderer(window);
+    set_background_color(WHITE);
 
-    Text text;
-    init_text(&text, renderer, "Hello, World", WHITE);
+    NodeArray node_array;
+    init_node_array(&node_array);
+    for (size_t i = 0; i < 3; i++) {
+        Node* node = new_node(i, -1, BLACK, 100);
+        add_node(&node_array, node);
+    }
 
     bool quit = false;
     while (quit == false) {
@@ -41,33 +65,29 @@ int main(void)
             }
         }
 
-        SDL_SetRenderDrawColor(renderer, RGBA(BLACK));
-        SDL_RenderClear(renderer);
+        //update();
+        // render();
+        render_background();
 
-        SDL_SetRenderDrawColor(renderer, RGBA(RED));
-        SDL_Rect rectangle = {
-            .x = SCREEN_WIDTH / 4,
-            .y = SCREEN_HEIGHT / 4,
-            .w = SCREEN_WIDTH / 2,
-            .h = SCREEN_HEIGHT / 2
-        };
-        SDL_RenderFillRect(renderer, &rectangle);
+        for (size_t i = 0; i < 3; i++) {
+            Node* node = node_array.nodes[i];
+            int height = node->text.height;
+            int width = node->text.width;
 
-        thickLineColor(renderer, 0, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT / 2, 4, BLUE);
+            int x = i * SCREEN_WIDTH / 3 + SCREEN_WIDTH / 6;
+            int y = SCREEN_HEIGHT / 2 - height / 2;
 
-        filledCircleColor(renderer, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_HEIGHT / 4,
-            RED | BLUE);
+            render_node(node, (Point){x, y}, true);
+        }
 
-
-        render_text(&text, renderer, 0, 0);
 
         SDL_RenderPresent(renderer); // swap front and back buffer
     }
 
-    free_text(&text);
-    TTF_Quit();
-    SDL_DestroyRenderer(renderer);
+    free_node_array(&node_array);
+    free_renderer();
     SDL_DestroyWindow(window);
+    TTF_Quit();
     SDL_Quit();
 
     return 0;

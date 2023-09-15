@@ -9,14 +9,6 @@
 
 #define SDL_ERROR() fprintf(stderr, "SDL_Error: %s\n", SDL_GetError())
 
-inline void* SDL(void* ptr) {
-    if (ptr == NULL) {
-        SDL_ERROR();
-        exit(EXIT_FAILURE);
-    }
-    return ptr;
-}
-
 // 0xAABBGGRR
 #define R(hex) hex >> (0 * 8) & 0xFF
 #define G(hex) hex >> (1 * 8) & 0xFF
@@ -36,5 +28,7 @@ inline void* SDL(void* ptr) {
     (A & 0xFF) << (3 * 8) |   \
 
 #define RGBA(hex) R(hex), G(hex), B(hex), A(hex)
+
+void* SDL(void* ptr);
 
 #endif // COMMON_H
