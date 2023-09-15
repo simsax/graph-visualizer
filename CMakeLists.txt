@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(graph-visualizer C)
 
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_C_STANDARD 11)
 
@@ -11,7 +11,10 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/sdl2_ttf/CMakeLists.txt")
     message(FATAL_ERROR "The sdl2_ttf submodule was not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
 
-add_executable(${PROJECT_NAME} main.c)
+add_executable(${PROJECT_NAME}
+    src/main.c
+    src/text.c
+)
 
 add_subdirectory(extern/sdl2_gfx)
 add_subdirectory(extern/sdl2_ttf)
