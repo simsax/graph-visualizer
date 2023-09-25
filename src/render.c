@@ -1,18 +1,41 @@
+#include <assert.h>
 #include "SDL2_gfxPrimitives.h"
 #include "render.h"
+#include "graph.h"
 #include "node.h"
 
-SDL_Renderer* renderer;
-uint32_t background_color;
+typedef struct {
+    SDL_Window* sdl_window;
+    int width;
+    int height;
+} Window;
 
-void init_renderer(SDL_Window* window) {
+SDL_Renderer* renderer;
+TTF_Font* font;
+uint32_t background_color;
+Window window;
+
+void init_window(const char* name, int width, int height) {
+    window.sdl_window = SDL(SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_SHOWN));
+    window.width = width;
+    window.height = height;
+}
+
+void init_renderer() {
     renderer = SDL(SDL_CreateRenderer(
-        window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC));
+        window.sdl_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC));
     background_color = WHITE;
+    font = SDL(TTF_OpenFont("../fonts/UbuntuMono-R.ttf", 300));
 }
 
 void free_renderer() {
+    TTF_CloseFont(font);
     SDL_DestroyRenderer(renderer);
+}
+
+void free_window() {
+    SDL_DestroyWindow(window.sdl_window);
 }
 
 void set_background_color(uint32_t color) {
@@ -21,10 +44,8 @@ void set_background_color(uint32_t color) {
 
 void init_text(Text* text, const char* message, uint32_t color, int size) {
     // consider using a global font and passing size as parameter
-    TTF_Font* font = SDL(TTF_OpenFont("../fonts/UbuntuMono-R.ttf", size));
     SDL_Surface* surface = SDL(TTF_RenderText_Solid(font, message, (SDL_Color){RGBA(color)}));
     SDL_Texture* texture = SDL(SDL_CreateTextureFromSurface(renderer, surface));
-    text->font = font;
     text->texture = texture;
     text->height = surface->h;
     text->width = surface->w;
@@ -33,35 +54,56 @@ void init_text(Text* text, const char* message, uint32_t color, int size) {
 }
 
 void free_text(Text* text) {
-    TTF_CloseFont(text->font);
     SDL_DestroyTexture(text->texture);
 }
 
-void render_text(Text* text, Point p) {
+void render_text(Text* text, PointI p) {
     int x_centered = p.x - text->width / 2;
     int y_centered = p.y - text->height / 2;
     SDL_Rect message_rect = {.x = x_centered, .y = y_centered, .w = text->width, .h = text->height};
     SDL_RenderCopy(renderer, text->texture, NULL, &message_rect);
 }
 
-static void render_circle_filled(Point center, int radius, int thickness, uint32_t color1,
+void render_circle_filled(PointI center, int radius, uint32_t color) {
+    filledCircleColor(renderer, center.x, center.y, radius, color);
+}
+
+static void render_circle_outline_filled(PointI center, int radius, int thickness, uint32_t color1,
     uint32_t color2) {
-    filledCircleColor(renderer, center.x, center.y, radius, color1);
-    filledCircleColor(renderer, center.x, center.y, radius - thickness, color2);
+    render_circle_filled(center, radius, color1);
+    render_circle_filled(center, radius - thickness, color2);
 }
 
-static void render_circle_outline(Point center, int radius, int thickness, uint32_t color) {
-    render_circle_filled(center, radius, thickness, color, background_color);
+static void render_circle_outline(PointI center, int radius, int thickness, uint32_t color) {
+    render_circle_outline_filled(center, radius, thickness, color, background_color);
 }
 
-void render_node(Node* node, Point position, bool use_label) {
+PointI ndc_to_screen_coords(PointF ndc) {
+    PointI screen_coords = {
+        .x = (ndc.x + 1) * 0.5f * window.width,
+        .y = (1 - ndc.y) * 0.5f * window.height
+    };
+    return screen_coords;
+}
+
+void render_node(Node* node, PointI position, bool use_label) {
     if (use_label) {
-        render_circle_filled(position, node->text.height , 10, BLACK, RED | GREEN);
+        render_circle_outline_filled(position, node->text.height , 10, BLACK, RED | GREEN);
         render_text(&node->text, position);
+    } else {
+        render_circle_filled(position, 10, BLACK);
     }
 }
 
 void render_background() {
     SDL_SetRenderDrawColor(renderer, RGBA(background_color));
     SDL_RenderClear(renderer);
+}
+
+void render_graph(Graph* graph, PointI positions[], size_t n, bool use_label) {
+    assert(n == graph->vertices.count);
+    for (size_t i = 0; i < graph->vertices.count; i++) {
+        Node* node = graph->vertices.nodes[i];
+        render_node(node, positions[i], use_label);
+    }
 }
