@@ -9,9 +9,11 @@ typedef struct Node {
     Text text;
     int weight;
     struct Node* next;
+    PointI position; // gonna need it when drawing the edges of the graph
 } Node;
+// number of edges should be a parameter (of a future ui, with real time updates)
 
-typedef struct {
+typedef struct NodeArray {
     size_t count;
     size_t capacity;
     Node** nodes;

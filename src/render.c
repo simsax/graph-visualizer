@@ -29,6 +29,14 @@ void init_renderer() {
     font = SDL(TTF_OpenFont("../fonts/UbuntuMono-R.ttf", 300));
 }
 
+int get_window_height() {
+    return window.height;
+}
+
+int get_window_width() {
+    return window.width;
+}
+
 void free_renderer() {
     TTF_CloseFont(font);
     SDL_DestroyRenderer(renderer);
@@ -91,7 +99,7 @@ void render_node(Node* node, PointI position, bool use_label) {
         render_circle_outline_filled(position, node->text.height , 10, BLACK, RED | GREEN);
         render_text(&node->text, position);
     } else {
-        render_circle_filled(position, 10, BLACK);
+        render_circle_filled(position, 8, 0xFFBBBBBB);
     }
 }
 
@@ -100,10 +108,9 @@ void render_background() {
     SDL_RenderClear(renderer);
 }
 
-void render_graph(Graph* graph, PointI positions[], size_t n, bool use_label) {
-    assert(n == graph->vertices.count);
+void render_graph(Graph* graph, bool use_label) {
     for (size_t i = 0; i < graph->vertices.count; i++) {
         Node* node = graph->vertices.nodes[i];
-        render_node(node, positions[i], use_label);
+        render_node(node, node->position, use_label);
     }
 }

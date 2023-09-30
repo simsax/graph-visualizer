@@ -16,6 +16,7 @@ Node* new_node(uint32_t label, int weight, uint32_t label_color, int label_size)
     init_text(&node->text, &label_str[0], label_color, label_size);
     node->weight = weight;
     node->next = NULL;
+    node->position = (PointI){-1, -1};
     return node;
 }
 

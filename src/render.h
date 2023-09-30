@@ -23,6 +23,7 @@
 
 #define RGBA(hex) R(hex), G(hex), B(hex), A(hex)
 
+#define PI 3.14159265359
 
 typedef struct Node Node;
 typedef struct Graph Graph;
@@ -45,6 +46,8 @@ typedef struct Text {
 } Text;
 
 void init_window(const char* name, int width, int height);
+int get_window_height();
+int get_window_width();
 void free_window();
 void init_renderer();
 void free_renderer();
@@ -54,7 +57,7 @@ void free_text(Text* text);
 void render_node(Node* node, PointI position, bool use_label);
 void render_text(Text* text, PointI p);
 void render_background();
-void render_graph(Graph* graph, PointI positions[], size_t n, bool use_label);
+void render_graph(Graph* graph, bool use_label);
 PointI ndc_to_screen_coords(PointF ndc);
 void render_circle_filled(PointI center, int radius, uint32_t color);
 

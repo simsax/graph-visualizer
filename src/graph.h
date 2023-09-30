@@ -5,11 +5,12 @@
 #include "node.h"
 
 typedef struct Graph {
-    NodeArray vertices;
     bool directed;
+    size_t n_edges;
+    NodeArray vertices;
 } Graph;
 
-void init_graph(Graph* graph, size_t num_vertices);
+void init_graph(Graph* graph, bool directed, size_t num_vertices);
 void free_graph(Graph* graph);
 
 #endif // GRAPH_H
