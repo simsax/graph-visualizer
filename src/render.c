@@ -2,7 +2,6 @@
 #include "SDL2_gfxPrimitives.h"
 #include "render.h"
 #include "graph.h"
-#include "node.h"
 
 typedef struct {
     SDL_Window* sdl_window;
@@ -72,7 +71,12 @@ void render_text(Text* text, PointI p) {
     SDL_RenderCopy(renderer, text->texture, NULL, &message_rect);
 }
 
-void render_circle_filled(PointI center, int radius, uint32_t color) {
+void render_background() {
+    SDL_SetRenderDrawColor(renderer, RGBA(background_color));
+    SDL_RenderClear(renderer);
+}
+
+static void render_circle_filled(PointI center, int radius, uint32_t color) {
     filledCircleColor(renderer, center.x, center.y, radius, color);
 }
 
@@ -86,7 +90,7 @@ static void render_circle_outline(PointI center, int radius, int thickness, uint
     render_circle_outline_filled(center, radius, thickness, color, background_color);
 }
 
-PointI ndc_to_screen_coords(PointF ndc) {
+static PointI ndc_to_screen_coords(PointF ndc) {
     PointI screen_coords = {
         .x = (ndc.x + 1) * 0.5f * window.width,
         .y = (1 - ndc.y) * 0.5f * window.height
@@ -94,23 +98,31 @@ PointI ndc_to_screen_coords(PointF ndc) {
     return screen_coords;
 }
 
-void render_node(Node* node, PointI position, bool use_label) {
+static void render_node(Node* node, bool use_label) {
     if (use_label) {
-        render_circle_outline_filled(position, node->text.height , 10, BLACK, RED | GREEN);
-        render_text(&node->text, position);
+        render_circle_outline_filled(node->position, node->text.height , 10, BLACK, RED | GREEN);
+        render_text(&node->text, node->position);
     } else {
-        render_circle_filled(position, 8, 0xFFBBBBBB);
+        render_circle_filled(node->position, 8, RED);
     }
 }
 
-void render_background() {
-    SDL_SetRenderDrawColor(renderer, RGBA(background_color));
-    SDL_RenderClear(renderer);
+static void render_edges(Graph* graph, size_t node_index) {
+    PointI source_position = graph->nodes[node_index].position;
+    for (EdgeNode* node = graph->adj_list[node_index]; node != NULL; node = node->next) {
+        PointI dest_position = graph->nodes[node->index].position;
+        thickLineColor(renderer, source_position.x, source_position.y,
+            dest_position.x, dest_position.y, 1, WHITE);
+    }
 }
 
 void render_graph(Graph* graph, bool use_label) {
-    for (size_t i = 0; i < graph->vertices.count; i++) {
-        Node* node = graph->vertices.nodes[i];
-        render_node(node, node->position, use_label);
+    // render all edges first for aesthetic purposes
+    for (size_t i = 0; i < graph->n_nodes; i++) {
+        render_edges(graph, i);
+    }
+    for (size_t i = 0; i < graph->n_nodes; i++) {
+        Node* node = &graph->nodes[i];
+        render_node(node, use_label);
     }
 }

@@ -54,12 +54,9 @@ void free_renderer();
 void set_background_color(uint32_t color);
 void init_text(Text* text, const char* message, uint32_t color, int size);
 void free_text(Text* text);
-void render_node(Node* node, PointI position, bool use_label);
 void render_text(Text* text, PointI p);
 void render_background();
 void render_graph(Graph* graph, bool use_label);
-PointI ndc_to_screen_coords(PointF ndc);
-void render_circle_filled(PointI center, int radius, uint32_t color);
 
 extern SDL_Renderer* renderer;
 

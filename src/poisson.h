@@ -1,8 +1,9 @@
 #ifndef POISSON_H
 #define POISSON_H
 
-typedef struct NodeArray NodeArray;
+#include "common.h"
+#include "graph.h"
 
-void poisson_disk_sampling(NodeArray* vertices, int radius, int k);
+void poisson_disk_sampling(Node* vertices, size_t num_points, int radius, int k);
 
 #endif // POISSON_H

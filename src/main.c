@@ -2,12 +2,12 @@
 #include <assert.h>
 #include "common.h"
 #include "render.h"
-#include "node.h"
 #include "graph.h"
 
 #define SCREEN_WIDTH 1920
 #define SCREEN_HEIGHT 1080
-#define N_VERTICES 100
+#define N_VERTICES 20
+#define N_EDGES N_VERTICES * (N_VERTICES - 1) / 2
 
 int main(void)
 {
@@ -27,7 +27,7 @@ int main(void)
     set_background_color(BLACK);
 
     Graph graph;
-    init_graph(&graph, false, N_VERTICES);
+    init_random_graph(&graph, false, N_VERTICES, N_EDGES);
 
     bool quit = false;
     while (quit == false) {
@@ -58,5 +58,3 @@ int main(void)
 
     return 0;
 }
-
-// support circular visualization (see complete graph on wikipedia)

@@ -16,7 +16,6 @@ add_executable(${PROJECT_NAME}
     src/render.c
     src/common.c
     src/graph.c
-    src/node.c
     src/poisson.c
 )
 

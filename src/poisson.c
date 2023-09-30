@@ -1,6 +1,5 @@
 #include "poisson.h"
 #include "render.h"
-#include "node.h"
 #include <assert.h>
 
 typedef struct {
@@ -15,7 +14,6 @@ typedef struct {
     int width;
     float cell_size;
 } Grid;
-
 
 static float rand_uniform() {
     return (float) rand() / (float) RAND_MAX;
@@ -34,7 +32,10 @@ static void init_grid(Grid* grid, float cell_size, int screen_height, int screen
     grid->cell_size = cell_size;
     size_t grid_size = grid->length * sizeof(PointI);
     grid->points = malloc(grid_size);
-    assert(grid->points != NULL);
+    if (grid->points == NULL) {
+        fprintf(stderr, "Failed to allocated grid points.\n");
+        exit(EXIT_FAILURE);
+    }
     memset(grid->points, -1, grid_size);
 }
 
@@ -46,7 +47,10 @@ static void init_active_list(ActiveList* active_list, size_t num_points) {
     active_list->count = 0;
     size_t list_size = num_points * sizeof(PointI);
     active_list->points = malloc(list_size);
-    assert(active_list->points != NULL);
+    if (active_list->points == NULL) {
+        fprintf(stderr, "Failed to allocated list points.\n");
+        exit(EXIT_FAILURE);
+    }
     memset(active_list->points, -1, list_size);
 }
 
@@ -59,12 +63,10 @@ static void list_insert(ActiveList* list, PointI p) {
 }
 
 static PointI pick_point(ActiveList* list, int index) {
-    assert(index < list->count && index >= 0);
     return list->points[index];
 }
 
 static void list_remove(ActiveList* list, int index) {
-    assert(index < list->count && index >= 0);
     for (int i = index; i < list->count; i++) {
         list->points[i] = list->points[i + 1];
     }
@@ -111,10 +113,9 @@ static bool valid_point_in_grid(Grid* grid, PointI p, int radius, int screen_hei
 
 
 
-void poisson_disk_sampling(NodeArray* vertices, int radius, int k) {
+void poisson_disk_sampling(Node* vertices, size_t num_points, int radius, int k) {
     int screen_height = get_window_height();
     int screen_width = get_window_width();
-    size_t num_points = vertices->count;
     float cell_size = (float) radius / sqrt(2);
     Grid grid;
     init_grid(&grid, cell_size, screen_height, screen_width);
@@ -156,10 +157,10 @@ void poisson_disk_sampling(NodeArray* vertices, int radius, int k) {
         }
     }
 
-    int p = 0;
+    size_t p = 0;
     for (int i = 0; i < grid.length; i++) {
         if (grid.points[i].x != -1) {
-            vertices->nodes[p++]->position = grid.points[i];
+            vertices[p++].position = grid.points[i];
         }
     }
 
