@@ -1,5 +1,6 @@
 #include "graph.h"
 #include "poisson.h"
+#include "spring_layout.h"
 
 
 static void init_node(Node* node, uint32_t label, uint32_t label_color, int label_size) {
@@ -100,9 +101,9 @@ static void generate_nodes_positions_random(Graph* graph) {
     }
 }
 
-static void generate_nodes_positions_spring(Graph* graph) {
-    spring_layout(graph->nodes, graph->n_nodes);
-}
+// static void generate_nodes_positions_spring(Graph* graph) {
+//     spring_layout(graph->nodes, graph->n_nodes);
+// }
 
 void init_random_graph(Graph* graph, bool directed, size_t num_vertices, size_t num_edges) {
     if (num_vertices == 0) {
@@ -119,6 +120,8 @@ void init_random_graph(Graph* graph, bool directed, size_t num_vertices, size_t 
     generate_random_edges(graph, num_edges);
     generate_nodes_positions_random(graph);
     // generate_nodes_positions_spring(graph);
+
+    init_spring_layout(graph->n_nodes);
 }
 
 void free_graph(Graph* graph) {
@@ -134,10 +137,10 @@ void free_graph(Graph* graph) {
         }
     }
     free(graph->adj_list);
+
+    free_spring_layout();
 }
 
 void update_graph(Graph* graph, double delta_time) {
-    for (size_t i = 0; i < graph->n_nodes; i++) {
-        graph->nodes[i].position.x += 100 * delta_time;
-    }
+    spring_layout(graph->nodes, graph->n_nodes, delta_time);
 }

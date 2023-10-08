@@ -25,6 +25,13 @@
 
 #define PI 3.14159265359
 
+// palette
+#define BACKGROUND 0xFF423614
+#define NODE_VISITED 0xFF4622D6
+#define NODE 0xFFD9D9D9
+#define COLOR4 0xFFAC8071
+#define COLOR5 0xFFDBD0A8
+
 typedef struct Node Node;
 typedef struct Graph Graph;
 

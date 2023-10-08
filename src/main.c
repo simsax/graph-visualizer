@@ -6,8 +6,8 @@
 
 #define SCREEN_WIDTH 1920
 #define SCREEN_HEIGHT 1080
-#define N_VERTICES 50
-#define N_EDGES 100
+#define N_VERTICES 100
+#define N_EDGES 1000
 
 int main(void)
 {
@@ -24,7 +24,7 @@ int main(void)
 
     init_window("Graph Visualizer", SCREEN_WIDTH, SCREEN_HEIGHT);
     init_renderer();
-    set_background_color(BLACK);
+    set_background_color(BACKGROUND);
 
     Graph graph;
     init_random_graph(&graph, false, N_VERTICES, N_EDGES);

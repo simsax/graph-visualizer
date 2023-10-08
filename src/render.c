@@ -100,10 +100,10 @@ static PointI ndc_to_screen_coords(PointF ndc) {
 
 static void render_node(Node* node, bool use_label) {
     if (use_label) {
-        render_circle_outline_filled(node->position, node->text.height , 10, BLACK, RED | GREEN);
+        render_circle_outline_filled(node->position, node->text.height , 10, BACKGROUND, NODE);
         render_text(&node->text, node->position);
     } else {
-        render_circle_filled(node->position, 8, RED);
+        render_circle_filled(node->position, 8, NODE_VISITED);
     }
 }
 
@@ -112,15 +112,15 @@ static void render_edges(Graph* graph, size_t node_index) {
     for (EdgeNode* node = graph->adj_list[node_index]; node != NULL; node = node->next) {
         PointF dest_position = graph->nodes[node->index].position;
         thickLineColor(renderer, (int) source_position.x, (int) source_position.y,
-            (int) dest_position.x, (int) dest_position.y, 1, WHITE);
+            (int) dest_position.x, (int) dest_position.y, 1, COLOR4);
     }
 }
 
 void render_graph(Graph* graph, bool use_label) {
-    // render all edges first for aesthetic purposes
-    for (size_t i = 0; i < graph->n_nodes; i++) {
-        render_edges(graph, i);
-    }
+    // render edges
+    // for (size_t i = 0; i < graph->n_nodes; i++) {
+    //     render_edges(graph, i);
+    // }
     // render nodes
     for (size_t i = 0; i < graph->n_nodes; i++) {
         Node* node = &graph->nodes[i];
