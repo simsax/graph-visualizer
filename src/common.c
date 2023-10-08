@@ -7,3 +7,7 @@ void* SDL(void* ptr) {
     }
     return ptr;
 }
+
+float rand_uniform() {
+    return (float) rand() / (float) RAND_MAX;
+}

@@ -7,7 +7,7 @@
 typedef struct Node {
     uint32_t label;
     Text text;
-    PointI position;
+    PointF position;
 } Node;
 
 typedef struct EdgeNode {
@@ -26,5 +26,6 @@ typedef struct Graph {
 
 void init_random_graph(Graph* graph, bool directed, size_t num_vertices, size_t num_edges);
 void free_graph(Graph* graph);
+void update_graph(Graph* graph, double delta_time);
 
 #endif // GRAPH_H

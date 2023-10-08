@@ -10,5 +10,6 @@
 #define SDL_ERROR() fprintf(stderr, "SDL_Error: %s\n", SDL_GetError())
 
 void* SDL(void* ptr);
+float rand_uniform();
 
 #endif // COMMON_H

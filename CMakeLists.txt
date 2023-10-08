@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(graph-visualizer C)
 
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_C_STANDARD 11)
 
@@ -17,6 +17,7 @@ add_executable(${PROJECT_NAME}
     src/common.c
     src/graph.c
     src/poisson.c
+    src/spring_layout.c
 )
 
 add_subdirectory(extern/sdl2_gfx)

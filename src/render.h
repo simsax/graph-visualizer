@@ -54,7 +54,7 @@ void free_renderer();
 void set_background_color(uint32_t color);
 void init_text(Text* text, const char* message, uint32_t color, int size);
 void free_text(Text* text);
-void render_text(Text* text, PointI p);
+void render_text(Text* text, PointF p);
 void render_background();
 void render_graph(Graph* graph, bool use_label);
 

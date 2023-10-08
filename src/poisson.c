@@ -3,23 +3,19 @@
 #include <assert.h>
 
 typedef struct {
-    PointI* points;
+    PointF* points;
     int count;
 } ActiveList;
 
 typedef struct {
-    PointI* points;
+    PointF* points;
     int length;
     int height;
     int width;
     float cell_size;
 } Grid;
 
-static float rand_uniform() {
-    return (float) rand() / (float) RAND_MAX;
-}
-
-static void add_point_to_grid(Grid* grid, PointI p) {
+static void add_point_to_grid(Grid* grid, PointF p) {
     int row = floor(p.y / grid->cell_size);
     int col = floor(p.x / grid->cell_size);
     grid->points[row * grid->width + col] = p;
@@ -30,7 +26,7 @@ static void init_grid(Grid* grid, float cell_size, int screen_height, int screen
     grid->width = floor(screen_width / cell_size);
     grid->length = grid->height * grid->width;
     grid->cell_size = cell_size;
-    size_t grid_size = grid->length * sizeof(PointI);
+    size_t grid_size = grid->length * sizeof(PointF);
     grid->points = malloc(grid_size);
     if (grid->points == NULL) {
         fprintf(stderr, "Failed to allocated grid points.\n");
@@ -43,9 +39,9 @@ static void free_grid(Grid* grid) {
     free(grid->points);
 }
 
-static void init_active_list(ActiveList* active_list, size_t num_points) {
+static void init_active_list(ActiveList* active_list, size_t num_vertices) {
     active_list->count = 0;
-    size_t list_size = num_points * sizeof(PointI);
+    size_t list_size = num_vertices * sizeof(PointF);
     active_list->points = malloc(list_size);
     if (active_list->points == NULL) {
         fprintf(stderr, "Failed to allocated list points.\n");
@@ -58,11 +54,11 @@ static void free_active_list(ActiveList* active_list) {
     free(active_list->points);
 }
 
-static void list_insert(ActiveList* list, PointI p) {
+static void list_insert(ActiveList* list, PointF p) {
     list->points[list->count++] = p;
 }
 
-static PointI pick_point(ActiveList* list, int index) {
+static PointF pick_point(ActiveList* list, int index) {
     return list->points[index];
 }
 
@@ -73,11 +69,11 @@ static void list_remove(ActiveList* list, int index) {
     list->count--;
 }
 
-static float square_distance(PointI a, PointI b) {
+static float square_distance(PointF a, PointF b) {
     return (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y);
 }
 
-static bool valid_point_in_grid(Grid* grid, PointI p, int radius, int screen_height, int screen_width) {
+static bool valid_point_in_grid(Grid* grid, PointF p, int radius, int screen_height, int screen_width) {
     if (p.y < 0 || p.y >= screen_height || p.x < 0 || p.x >= screen_width) {
         // point is outside of window
         return false;
@@ -86,7 +82,7 @@ static bool valid_point_in_grid(Grid* grid, PointI p, int radius, int screen_hei
     int row = floor(p.y / grid->cell_size);
     int col = floor(p.x / grid->cell_size);
 
-    PointI grid_point = grid->points[row * grid->width + col];
+    PointF grid_point = grid->points[row * grid->width + col];
 
     if (grid_point.x != -1) {
         // already occupied
@@ -102,7 +98,7 @@ static bool valid_point_in_grid(Grid* grid, PointI p, int radius, int screen_hei
 
     for (int i = top_cell; i <= bottom_cell; i++) {
         for (int j = left_cell; j <= right_cell; j++) {
-            PointI point = grid->points[i * grid->width + j];
+            PointF point = grid->points[i * grid->width + j];
             if (point.x != -1 && square_distance(point, p) <= square_radius)
                 return false;
         }
@@ -113,16 +109,16 @@ static bool valid_point_in_grid(Grid* grid, PointI p, int radius, int screen_hei
 
 
 
-void poisson_disk_sampling(Node* vertices, size_t num_points, int radius, int k) {
+void poisson_disk_sampling(Node* vertices, size_t num_vertices, int radius, int k) {
     int screen_height = get_window_height();
     int screen_width = get_window_width();
     float cell_size = (float) radius / sqrt(2);
     Grid grid;
     init_grid(&grid, cell_size, screen_height, screen_width);
     ActiveList active_list;
-    init_active_list(&active_list, num_points);
+    init_active_list(&active_list, num_vertices);
     size_t point_counter = 0;
-    PointI first_point = (PointI) {
+    PointF first_point = (PointF) {
         .x = floor(get_window_width() / 2),
         .y = floor(get_window_height() / 2)
     };
@@ -130,15 +126,15 @@ void poisson_disk_sampling(Node* vertices, size_t num_points, int radius, int k)
     list_insert(&active_list, first_point);
     point_counter++;
 
-    while (active_list.count > 0 && point_counter < num_points) {
+    while (active_list.count > 0 && point_counter < num_vertices) {
         int i = rand() % active_list.count;
-        PointI current_point = pick_point(&active_list, i);
+        PointF current_point = pick_point(&active_list, i);
         bool found = false;
         for (int j = 0; j < k; j++) {
             float r = (1 + sqrt(rand_uniform())) * radius;
             float theta = 2 * PI * rand_uniform();
 
-            PointI point = (PointI) {
+            PointF point = (PointF) {
                 .x = current_point.x + r * cos(theta),
                 .y = current_point.y + r * sin(theta)
             };
@@ -148,7 +144,7 @@ void poisson_disk_sampling(Node* vertices, size_t num_points, int radius, int k)
                 add_point_to_grid(&grid, point);
                 list_insert(&active_list, point);
                 point_counter++;
-                if (point_counter >= num_points)
+                if (point_counter >= num_vertices)
                     break;
             }
         }
@@ -164,7 +160,7 @@ void poisson_disk_sampling(Node* vertices, size_t num_points, int radius, int k)
         }
     }
 
-    assert(p == num_points);
+    assert(p == num_vertices);
 
     free_grid(&grid);
     free_active_list(&active_list);
