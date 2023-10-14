@@ -27,5 +27,6 @@ typedef struct Graph {
 void init_random_graph(Graph* graph, bool directed, size_t num_vertices, size_t num_edges);
 void free_graph(Graph* graph);
 void update_graph(Graph* graph, double delta_time);
+bool exists_edge(Graph* graph, size_t v1, size_t v2);
 
 #endif // GRAPH_H

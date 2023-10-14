@@ -23,7 +23,7 @@ static bool is_complete(size_t num_edges, size_t num_vertices) {
 //     return graph->n_edges * (graph->n_edges - 1) / 2 == graph->vertices.count;
 // }
 
-static EdgeNode* new_edge_node(uint32_t index, int weight, EdgeNode* next) {
+static EdgeNode* new_edge_node(uint32_t index, EdgeNode* next, int weight) {
     EdgeNode* node = malloc(sizeof(EdgeNode));
     if (node == NULL) {
         fprintf(stderr, "Failed to allocate edge node.\n");
@@ -36,10 +36,10 @@ static EdgeNode* new_edge_node(uint32_t index, int weight, EdgeNode* next) {
 }
 
 static void add_edge(Graph* graph, size_t source, size_t dest, int weight) {
-    graph->adj_list[source] = new_edge_node(dest, weight, graph->adj_list[source]);
+    graph->adj_list[source] = new_edge_node(dest, graph->adj_list[source], weight);
 
-    if (graph->directed)
-        graph->adj_list[dest] = new_edge_node(source, weight, graph->adj_list[dest]);
+    if (!graph->directed)
+        graph->adj_list[dest] = new_edge_node(source, graph->adj_list[dest], weight);
 
     graph->n_edges++;
 }
@@ -50,20 +50,44 @@ static void generate_complete_graph_undirected(Graph* graph, size_t num_edges) {
     size_t n_vertices = graph->n_nodes;
     for (size_t i = 0; i < n_vertices && graph->n_edges < num_edges; i++) {
         for (size_t j = i + 1; j < n_vertices && graph->n_edges < num_edges; j++) {
-            add_edge(graph, i, j, 0);
+            add_edge(graph, i, j, 1);
         }
     }
 }
 
-static void generate_random_edges(Graph* graph, size_t num_edges) {
-    if (!graph->directed) {
-        generate_complete_graph_undirected(graph, num_edges);
-    } else {
-        // TODO
+static void generate_random_undirected(Graph* graph) {
+    size_t n_vertices = graph->n_nodes;
+    float edge_probability = 0.03f;
+    for (size_t i = 0; i < n_vertices; i++) {
+        for (size_t j = i + 1; j < n_vertices; j++) {
+            if (rand_uniform() < edge_probability)
+                add_edge(graph, i, j, 1);
+        }
     }
 }
 
-static void generate_random_nodes(Graph* graph) {
+static void print_adj_lsit(Graph* graph) {
+    for (size_t i = 0; i < graph->n_nodes; i++) {
+        printf("Node %d: ", i);
+        for (EdgeNode* edge_node = graph->adj_list[i]; edge_node != NULL; edge_node = edge_node->next) {
+            printf("%d -> ", edge_node->index);
+        }
+        printf(" NULL\n");
+    }
+    printf("\n");
+}
+
+static void generate_random_edges(Graph* graph, size_t num_edges) {
+    if (!graph->directed) {
+        // generate_complete_graph_undirected(graph, num_edges);
+        generate_random_undirected(graph);
+    } else {
+        // TODO
+    }
+
+}
+
+static void generate_nodes(Graph* graph) {
     graph->nodes = malloc(sizeof(Node) * graph->n_nodes);
     if (graph->nodes == NULL) {
         fprintf(stderr, "Failed to allocate graph vertices.\n");
@@ -116,7 +140,7 @@ void init_random_graph(Graph* graph, bool directed, size_t num_vertices, size_t 
     graph->n_nodes = num_vertices;
 
     init_adj_list(graph);
-    generate_random_nodes(graph);
+    generate_nodes(graph);
     generate_random_edges(graph, num_edges);
     generate_nodes_positions_random(graph);
     // generate_nodes_positions_spring(graph);
@@ -142,5 +166,13 @@ void free_graph(Graph* graph) {
 }
 
 void update_graph(Graph* graph, double delta_time) {
-    spring_layout(graph->nodes, graph->n_nodes, delta_time);
+    spring_layout(graph, delta_time);
+}
+
+bool exists_edge(Graph* graph, size_t v1, size_t v2) {
+    for (EdgeNode* edge_node = graph->adj_list[v1]; edge_node != NULL; edge_node = edge_node->next) {
+        if (edge_node->index == v2)
+            return true;
+    }
+    return false;
 }

@@ -118,9 +118,9 @@ static void render_edges(Graph* graph, size_t node_index) {
 
 void render_graph(Graph* graph, bool use_label) {
     // render edges
-    // for (size_t i = 0; i < graph->n_nodes; i++) {
-    //     render_edges(graph, i);
-    // }
+    for (size_t i = 0; i < graph->n_nodes; i++) {
+        render_edges(graph, i);
+    }
     // render nodes
     for (size_t i = 0; i < graph->n_nodes; i++) {
         Node* node = &graph->nodes[i];

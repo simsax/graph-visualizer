@@ -6,8 +6,8 @@
 
 #define SCREEN_WIDTH 1920
 #define SCREEN_HEIGHT 1080
-#define N_VERTICES 100
-#define N_EDGES 1000
+#define N_VERTICES 50
+#define N_EDGES 100
 
 int main(void)
 {
