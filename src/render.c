@@ -3,6 +3,11 @@
 #include "render.h"
 #include "graph.h"
 
+#define BACKGROUND_COLOR 0xFF111111
+#define VERTEX_COLOR COLOR7
+#define SELECTED_VERTEX_COLOR COLOR7L
+#define EDGE_COLOR COLOR10
+
 typedef struct {
     SDL_Window* sdl_window;
     int width;
@@ -11,7 +16,6 @@ typedef struct {
 
 SDL_Renderer* renderer;
 TTF_Font* font;
-uint32_t background_color;
 Window window;
 
 void init_window(const char* name, int width, int height) {
@@ -22,9 +26,9 @@ void init_window(const char* name, int width, int height) {
 }
 
 void init_renderer() {
+    SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "1" ); // linear filtering
     renderer = SDL(SDL_CreateRenderer(
         window.sdl_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC));
-    background_color = WHITE;
     font = SDL(TTF_OpenFont("../fonts/UbuntuMono-R.ttf", 300));
 }
 
@@ -43,10 +47,6 @@ void free_renderer() {
 
 void free_window() {
     SDL_DestroyWindow(window.sdl_window);
-}
-
-void set_background_color(uint32_t color) {
-    background_color = color;
 }
 
 void init_text(Text* text, const char* message, uint32_t color, int size) {
@@ -72,12 +72,13 @@ void render_text(Text* text, PointF p) {
 }
 
 void render_background() {
-    SDL_SetRenderDrawColor(renderer, RGBA(background_color));
+    SDL_SetRenderDrawColor(renderer, RGBA(BACKGROUND_COLOR));
     SDL_RenderClear(renderer);
 }
 
 static void render_circle_filled(PointF center, int radius, uint32_t color) {
     filledCircleColor(renderer, (int) center.x, (int) center.y, radius, color);
+    // aacircleColor(renderer, (int) center.x, (int) center.y, radius, color);
 }
 
 static void render_circle_outline_filled(PointF center, int radius, int thickness, uint32_t color1,
@@ -87,7 +88,7 @@ static void render_circle_outline_filled(PointF center, int radius, int thicknes
 }
 
 static void render_circle_outline(PointF center, int radius, int thickness, uint32_t color) {
-    render_circle_outline_filled(center, radius, thickness, color, background_color);
+    render_circle_outline_filled(center, radius, thickness, color, BACKGROUND_COLOR);
 }
 
 static PointI ndc_to_screen_coords(PointF ndc) {
@@ -98,21 +99,24 @@ static PointI ndc_to_screen_coords(PointF ndc) {
     return screen_coords;
 }
 
-static void render_node(Node* node, bool use_label) {
+static void render_node(Node* node, bool use_label, int radius, uint32_t color) {
     if (use_label) {
-        render_circle_outline_filled(node->position, node->text.height , 10, BACKGROUND, NODE);
+        render_circle_outline_filled(node->position, node->text.height, radius * 1.2, BACKGROUND_COLOR, color);
         render_text(&node->text, node->position);
     } else {
-        render_circle_filled(node->position, 8, NODE_VISITED);
+        render_circle_filled(node->position, radius, color);
     }
 }
 
 static void render_edges(Graph* graph, size_t node_index) {
+    uint8_t thickness = 1;
     PointF source_position = graph->nodes[node_index].position;
     for (EdgeNode* node = graph->adj_list[node_index]; node != NULL; node = node->next) {
         PointF dest_position = graph->nodes[node->index].position;
-        thickLineColor(renderer, (int) source_position.x, (int) source_position.y,
-            (int) dest_position.x, (int) dest_position.y, 1, COLOR4);
+        aalineColor(renderer, (int) source_position.x, (int) source_position.y,
+            (int) dest_position.x, (int) dest_position.y, EDGE_COLOR);
+        // thickLineColor(renderer, (int) source_position.x, (int) source_position.y,
+        //     (int) dest_position.x, (int) dest_position.y, thickness, COLOR4);
     }
 }
 
@@ -124,6 +128,7 @@ void render_graph(Graph* graph, bool use_label) {
     // render nodes
     for (size_t i = 0; i < graph->n_nodes; i++) {
         Node* node = &graph->nodes[i];
-        render_node(node, use_label);
+        uint32_t color = graph->colliding_vertex == i ? SELECTED_VERTEX_COLOR : VERTEX_COLOR;
+        render_node(node, use_label, graph->node_radius, color);
     }
 }

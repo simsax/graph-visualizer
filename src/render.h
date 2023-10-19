@@ -25,25 +25,23 @@
 
 #define PI 3.14159265359
 
-// palette
-#define BACKGROUND 0xFF423614
-#define NODE_VISITED 0xFF4622D6
-#define NODE 0xFFD9D9D9
-#define COLOR4 0xFFAC8071
-#define COLOR5 0xFFDBD0A8
+// palette 1
+#define COLOR1 0xFF23141A
+#define COLOR2 0xFF492537
+#define COLOR3 0xFF604C77
+#define COLOR4 0xFF695DB7
+#define COLOR5 0xFFC2CDEA
+
+// palette 2
+#define COLOR6 0xFF423614
+#define COLOR7 0xFF4622D6
+#define COLOR7L 0XFFA18EED
+#define COLOR8 0xFFD9D9D9
+#define COLOR9 0xFFAC8071
+#define COLOR10 0xFFDBD0A8
 
 typedef struct Node Node;
 typedef struct Graph Graph;
-
-typedef struct {
-    float x;
-    float y;
-} PointF;
-
-typedef struct {
-    int x;
-    int y;
-} PointI;
 
 typedef struct Text {
     SDL_Texture* texture;
@@ -58,7 +56,6 @@ int get_window_width();
 void free_window();
 void init_renderer();
 void free_renderer();
-void set_background_color(uint32_t color);
 void init_text(Text* text, const char* message, uint32_t color, int size);
 void free_text(Text* text);
 void render_text(Text* text, PointF p);

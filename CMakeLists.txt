@@ -16,8 +16,7 @@ add_executable(${PROJECT_NAME}
     src/render.c
     src/common.c
     src/graph.c
-    src/poisson.c
-    src/spring_layout.c
+    src/physics.c
 )
 
 add_subdirectory(extern/sdl2_gfx)

@@ -3,6 +3,13 @@
 
 #include "common.h"
 #include "render.h"
+#include "physics.h"
+
+typedef enum {
+    QUIT_STATE,
+    RUNNING_STATE,
+    PAUSED_STATE,
+} State;
 
 typedef struct Node {
     uint32_t label;
@@ -17,6 +24,8 @@ typedef struct EdgeNode {
 } EdgeNode;
 
 typedef struct Graph {
+    int colliding_vertex;
+    int node_radius;
     bool directed;
     size_t n_edges;
     size_t n_nodes;
@@ -24,9 +33,14 @@ typedef struct Graph {
     EdgeNode** adj_list;
 } Graph;
 
-void init_random_graph(Graph* graph, bool directed, size_t num_vertices, size_t num_edges);
+extern State simulation_state;
+
+void init_random_graph(Graph* graph, bool directed, size_t num_vertices, int node_radius);
 void free_graph(Graph* graph);
 void update_graph(Graph* graph, double delta_time);
 bool exists_edge(Graph* graph, size_t v1, size_t v2);
+void drag();
+void undrag();
+void update_cursor_position(Graph* graph, int x, int y);
 
 #endif // GRAPH_H

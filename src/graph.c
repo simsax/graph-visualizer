@@ -1,7 +1,7 @@
 #include "graph.h"
-#include "poisson.h"
-#include "spring_layout.h"
 
+State simulation_state = PAUSED_STATE;
+static bool dragging = false;
 
 static void init_node(Node* node, uint32_t label, uint32_t label_color, int label_size) {
     char label_str[5];
@@ -44,12 +44,10 @@ static void add_edge(Graph* graph, size_t source, size_t dest, int weight) {
     graph->n_edges++;
 }
 
-static void generate_complete_graph_undirected(Graph* graph, size_t num_edges) {
-    // first dumb approach: try to generate complete graph
-    // until there are `num_edges` connected
+static void generate_complete_graph_undirected(Graph* graph) {
     size_t n_vertices = graph->n_nodes;
-    for (size_t i = 0; i < n_vertices && graph->n_edges < num_edges; i++) {
-        for (size_t j = i + 1; j < n_vertices && graph->n_edges < num_edges; j++) {
+    for (size_t i = 0; i < n_vertices; i++) {
+        for (size_t j = i + 1; j < n_vertices; j++) {
             add_edge(graph, i, j, 1);
         }
     }
@@ -57,18 +55,35 @@ static void generate_complete_graph_undirected(Graph* graph, size_t num_edges) {
 
 static void generate_random_undirected(Graph* graph) {
     size_t n_vertices = graph->n_nodes;
-    float edge_probability = 0.03f;
+    int max_vertex_degree = 3;
+    float edge_probability = 0.5f;
+    // array of nodes counter, stop iterating when counter is over a given threshold
+    int* vertex_degree = calloc(n_vertices, sizeof(int));
+    if (vertex_degree == NULL) {
+        fprintf(stderr, "Calloc failed.\n");
+        exit(EXIT_FAILURE);
+    }
+
     for (size_t i = 0; i < n_vertices; i++) {
         for (size_t j = i + 1; j < n_vertices; j++) {
-            if (rand_uniform() < edge_probability)
+            if (vertex_degree[i] >= max_vertex_degree)
+                break;
+            if (vertex_degree[j] >= max_vertex_degree)
+                continue;
+            if (rand_uniform() < edge_probability) {
+                vertex_degree[i]++;
+                vertex_degree[j]++;
                 add_edge(graph, i, j, 1);
+            }
         }
     }
+
+    free(vertex_degree);
 }
 
 static void print_adj_lsit(Graph* graph) {
     for (size_t i = 0; i < graph->n_nodes; i++) {
-        printf("Node %d: ", i);
+        printf("Node %zu: ", i);
         for (EdgeNode* edge_node = graph->adj_list[i]; edge_node != NULL; edge_node = edge_node->next) {
             printf("%d -> ", edge_node->index);
         }
@@ -77,9 +92,9 @@ static void print_adj_lsit(Graph* graph) {
     printf("\n");
 }
 
-static void generate_random_edges(Graph* graph, size_t num_edges) {
+static void generate_random_edges(Graph* graph) {
     if (!graph->directed) {
-        // generate_complete_graph_undirected(graph, num_edges);
+        // generate_complete_graph_undirected(graph);
         generate_random_undirected(graph);
     } else {
         // TODO
@@ -129,7 +144,7 @@ static void generate_nodes_positions_random(Graph* graph) {
 //     spring_layout(graph->nodes, graph->n_nodes);
 // }
 
-void init_random_graph(Graph* graph, bool directed, size_t num_vertices, size_t num_edges) {
+void init_random_graph(Graph* graph, bool directed, size_t num_vertices, int node_radius) {
     if (num_vertices == 0) {
         fprintf(stderr, "Cannot generate a graph with 0 vertices.\n");
         exit(EXIT_FAILURE);
@@ -138,14 +153,17 @@ void init_random_graph(Graph* graph, bool directed, size_t num_vertices, size_t 
     graph->directed = directed;
     graph->n_edges = 0;
     graph->n_nodes = num_vertices;
+    graph->node_radius = node_radius;
+    graph->colliding_vertex = -1;
 
     init_adj_list(graph);
     generate_nodes(graph);
-    generate_random_edges(graph, num_edges);
+    generate_random_edges(graph);
     generate_nodes_positions_random(graph);
     // generate_nodes_positions_spring(graph);
 
     init_spring_layout(graph->n_nodes);
+    // spring_layout(graph);
 }
 
 void free_graph(Graph* graph) {
@@ -166,7 +184,9 @@ void free_graph(Graph* graph) {
 }
 
 void update_graph(Graph* graph, double delta_time) {
-    spring_layout(graph, delta_time);
+    if (simulation_state == RUNNING_STATE) {
+        spring_layout_live(graph, delta_time);
+    }
 }
 
 bool exists_edge(Graph* graph, size_t v1, size_t v2) {
@@ -175,4 +195,45 @@ bool exists_edge(Graph* graph, size_t v1, size_t v2) {
             return true;
     }
     return false;
+}
+
+void drag() {
+    // ray cast to find if colliding with a particular vertex
+    dragging = true;
+}
+
+void undrag() {
+    dragging = false;
+}
+
+static void check_vertex_cursor_collision(Graph* graph, PointI cursor) {
+    Node* vertices = graph->nodes;
+    int radius = graph->node_radius;
+    bool found = false;
+    for (size_t i = 0; i < graph->n_nodes && !found; i++) {
+        Aabb vertex_aabb = {
+            vertices[i].position.x - radius,
+            vertices[i].position.x + radius,
+            vertices[i].position.y - radius,
+            vertices[i].position.y + radius
+        };
+        if (intersect_point(&vertex_aabb, cursor)) {
+            graph->colliding_vertex = i;
+            found = true;
+        }
+    }
+    if (!found)
+        graph->colliding_vertex = -1;
+}
+
+void update_cursor_position(Graph* graph, int x, int y) {
+    if (simulation_state == RUNNING_STATE) {
+        if (dragging) {
+            // move dragged vertex to cursor position
+        } else {
+            // run raycasting to find out if there is any vertex to highlight
+            // hightlighting done by picking a lighter color than the vertex color, but same hue
+            check_vertex_cursor_collision(graph, (PointI){x,y});
+        }
+    }
 }
