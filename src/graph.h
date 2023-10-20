@@ -11,6 +11,11 @@ typedef enum {
     PAUSED_STATE,
 } State;
 
+typedef enum {
+    RANDOM_CONFIG,
+    COMPLETE_CONFIG
+} GraphConfig;
+
 typedef struct Node {
     uint32_t label;
     Text text;
@@ -35,12 +40,12 @@ typedef struct Graph {
 
 extern State simulation_state;
 
-void init_random_graph(Graph* graph, bool directed, size_t num_vertices, int node_radius);
+void init_graph(Graph* graph, GraphConfig config, bool directed, size_t num_vertices, int node_radius);
 void free_graph(Graph* graph);
 void update_graph(Graph* graph, double delta_time);
 bool exists_edge(Graph* graph, size_t v1, size_t v2);
 void drag();
 void undrag();
-void update_cursor_position(Graph* graph, int x, int y);
+void update_cursor_position(int x, int y);
 
 #endif // GRAPH_H

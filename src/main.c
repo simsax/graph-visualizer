@@ -6,10 +6,9 @@
 
 #define SCREEN_WIDTH 1920
 #define SCREEN_HEIGHT 1080
-#define N_VERTICES 60
+#define N_VERTICES 8
 
-// TODO: read graph from file, mouse input on the vertices (drag them and update the forces
-// real-time)
+// TODO: read graph from file
 
 int main(void)
 {
@@ -28,7 +27,7 @@ int main(void)
     init_renderer();
 
     Graph graph;
-    init_random_graph(&graph, false, N_VERTICES, 8);
+    init_graph(&graph, COMPLETE_CONFIG, false, N_VERTICES, 8);
 
     uint64_t current = SDL_GetPerformanceCounter();
     uint64_t last = 0;
@@ -52,16 +51,16 @@ int main(void)
                 break;
             case SDL_MOUSEBUTTONDOWN:
                 if (e.button.button == SDL_BUTTON_LEFT) {
-                    drag();
+                    drag(&graph);
                 }
                 break;
             case SDL_MOUSEBUTTONUP:
                 if (e.button.button == SDL_BUTTON_LEFT) {
-                    undrag();
+                    undrag(&graph);
                 }
                 break;
             case SDL_MOUSEMOTION:
-                update_cursor_position(&graph, e.motion.x, e.motion.y);
+                update_cursor_position(e.motion.x, e.motion.y);
             default:
                 break;
             }
