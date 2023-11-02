@@ -132,3 +132,20 @@ void render_graph(Graph* graph, bool use_label) {
         render_node(node, use_label, graph->node_radius, color);
     }
 }
+
+static uint32_t mult_color(uint32_t color, float factor) {
+    uint32_t red = (uint32_t) ((R(color)) * factor);
+    uint32_t green = (uint32_t) ((G(color)) * factor);
+    uint32_t blue = (uint32_t) ((B(color)) * factor);
+    red = factor < 1 ? fmax(0, red) : fmin(0xFF, red);
+    green = factor < 1 ? fmax(0, green) : fmin(0xFF, green);
+    blue = factor < 1 ? fmax(0, blue) : fmin(0xFF, blue);
+    return HEX(red, green, blue, 0xFF);
+}
+
+void render_button(PointI point1, PointI point2, const char* text, bool is_hot) {
+    uint32_t color = COLOR6;
+    if (is_hot)
+        color = mult_color(color, 1.5);
+    roundedBoxColor(renderer, point1.x, point1.y, point2.x, point2.y, 20, color);   
+}

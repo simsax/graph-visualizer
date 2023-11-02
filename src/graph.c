@@ -1,6 +1,6 @@
 #include "graph.h"
 
-State simulation_state = PAUSED_STATE;
+State simulation_state = MENU_STATE;
 static bool dragging = false;
 static PointI cursor_position;
 

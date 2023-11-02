@@ -14,12 +14,13 @@
 #define RED   0xFF0000FF
 #define GREEN 0xFF00FF00
 #define BLUE  0xFFFF0000
+#define YELLOW RED | GREEN
 
 #define HEX(R, G, B, A)       \
     (R & 0xFF) << (0 * 8) |   \
     (G & 0xFF) << (1 * 8) |   \
     (B & 0xFF) << (2 * 8) |   \
-    (A & 0xFF) << (3 * 8) |   \
+    (A & 0xFF) << (3 * 8)     \
 
 #define RGBA(hex) R(hex), G(hex), B(hex), A(hex)
 
@@ -61,6 +62,7 @@ void free_text(Text* text);
 void render_text(Text* text, PointF p);
 void render_background();
 void render_graph(Graph* graph, bool use_label);
+void render_button(PointI point1, PointI point2, const char* text, bool is_hot);
 
 extern SDL_Renderer* renderer;
 

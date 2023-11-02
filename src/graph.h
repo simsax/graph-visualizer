@@ -9,7 +9,10 @@ typedef enum {
     QUIT_STATE,
     RUNNING_STATE,
     PAUSED_STATE,
+    MENU_STATE
 } State;
+
+// maybe I need different scenes
 
 typedef enum {
     RANDOM_CONFIG,
