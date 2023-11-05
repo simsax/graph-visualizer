@@ -30,9 +30,7 @@ int main(void)
     Graph graph;
     init_graph(&graph, COMPLETE_CONFIG, false, N_VERTICES, 8);
 
-    Ui ui;
-    init_ui(&ui);
-
+    init_ui();
     uint64_t current = SDL_GetPerformanceCounter();
     uint64_t last = 0;
     while (simulation_state != QUIT_STATE) {
@@ -43,11 +41,16 @@ int main(void)
                 simulation_state = QUIT_STATE;
                 break;
 
-            case SDL_KEYDOWN:
+            case SDL_KEYUP:
                 switch (e.key.keysym.sym) {
                 case SDLK_SPACE:
-                    simulation_state
-                        = simulation_state == PAUSED_STATE ? RUNNING_STATE : PAUSED_STATE;
+                    if (simulation_state != MENU_STATE) {
+                        simulation_state
+                            = simulation_state == PAUSED_STATE ? RUNNING_STATE : PAUSED_STATE;
+                    }
+                    break;
+                case SDLK_m:
+                    simulation_state = MENU_STATE;
                     break;
                 default:
                     break;
@@ -55,23 +58,23 @@ int main(void)
                 break;
             case SDL_MOUSEBUTTONDOWN:
                 if (e.button.button == SDL_BUTTON_LEFT) {
-                    mouse_down(&ui, LEFT_BUTTON);
+                    mouse_down(LEFT_BUTTON);
                     drag();
                 } else if (e.button.button == SDL_BUTTON_RIGHT) {
-                    mouse_down(&ui, RIGHT_BUTTON);
+                    mouse_down(RIGHT_BUTTON);
                 }
                 break;
             case SDL_MOUSEBUTTONUP:
                 if (e.button.button == SDL_BUTTON_LEFT) {
-                    mouse_up(&ui, LEFT_BUTTON);
+                    mouse_up(LEFT_BUTTON);
                     undrag();
                 } else if (e.button.button == SDL_BUTTON_RIGHT) {
-                    mouse_up(&ui, RIGHT_BUTTON);
+                    mouse_up(RIGHT_BUTTON);
                 }
                 break;
             case SDL_MOUSEMOTION:
                 update_cursor_position(e.motion.x, e.motion.y);
-                mouse_moved(&ui, e.motion.x, e.motion.y);
+                mouse_moved(e.motion.x, e.motion.y);
             default:
                 break;
             }
@@ -89,14 +92,58 @@ int main(void)
         switch (simulation_state) {
             case MENU_STATE: 
                 {
-                    if (do_button(&ui, 1, (PointI) {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2}, "Start")) {
-                        printf("Start button pressed!\n");
-                        simulation_state = RUNNING_STATE;
+                    begin_ui(HORIZONTAL_LAYOUT, TOP_ALIGNMENT, (Padding) {10, 10, 10, 10});
+                    begin_group(VERTICAL_LAYOUT, LEFT_ALIGNMENT, (Padding) {10, 10, 10, 10});
+                    Padding button_padding = {
+                        .top = 10,
+                        .bottom = 10,
+                        .left = 10,
+                        .right = 100
+                    };
+                    if (do_button("Start", button_padding)) {
+                        printf("Start\n");
+                        /* simulation_state = RUNNING_STATE; */
                     }
-                    if (do_button(&ui, 2, (PointI) {SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 120}, "Quit")) {
-                        printf("Quit button pressed!\n");
-                        simulation_state = QUIT_STATE;
+                    if (do_button("Quit", button_padding)) {
+                        printf("Quit\n");
+                        /* simulation_state = QUIT_STATE; */
                     }
+                    if (do_button("Foo", button_padding)) {
+                        printf("Foo\n");
+                    }
+                    if (do_button("Nothing", button_padding)) {
+                        printf("Nothing\n");
+                    }
+                    if (do_button("Miao", button_padding)) {
+                        printf("Miao\n");
+                    }
+                    if (do_button("Bar", button_padding)) {
+                        printf("Bar\n");
+                    }
+                    end_group();
+                    begin_group(VERTICAL_LAYOUT, LEFT_ALIGNMENT, (Padding) {10, 10, 10, 10});
+                    if (do_button("Start", button_padding)) {
+                        printf("Start2\n");
+                        /* simulation_state = RUNNING_STATE; */
+                    }
+                    if (do_button("Quit", button_padding)) {
+                        printf("Quit2\n");
+                        /* simulation_state = QUIT_STATE; */
+                    }
+                    if (do_button("Foo", button_padding)) {
+                        printf("Foo2\n");
+                    }
+                    if (do_button("Nothing", button_padding)) {
+                        printf("Nothing2\n");
+                    }
+                    if (do_button("Miao", button_padding)) {
+                        printf("Miao2\n");
+                    }
+                    if (do_button("Bar", button_padding)) {
+                        printf("Bar2\n");
+                    }
+                    end_group();
+                    end_ui();
                 }
                 break;
             case RUNNING_STATE:
@@ -108,7 +155,6 @@ int main(void)
         }
 
         SDL_RenderPresent(renderer);
-        reset_mouse(&ui);
     }
     free_graph(&graph);
     free_renderer();
