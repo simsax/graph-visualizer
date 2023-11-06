@@ -142,11 +142,11 @@ static void init_adj_list(Graph* graph)
     }
 }
 
-static void generate_nodes_positions_poisson(Graph* graph)
-{
-    int radius = (int)calculate_radius(graph->n_nodes, 600);
-    poisson_disk_sampling(graph->nodes, graph->n_nodes, radius, 30);
-}
+/* static void generate_nodes_positions_poisson(Graph* graph) */
+/* { */
+/*     int radius = (int)calculate_radius(graph->n_nodes, 600); */
+/*     poisson_disk_sampling(graph->nodes, graph->n_nodes, radius, 30); */
+/* } */
 
 static void generate_nodes_positions_random(Graph* graph)
 {

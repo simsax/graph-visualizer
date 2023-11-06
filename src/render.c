@@ -149,3 +149,7 @@ void render_button(PointI point1, PointI point2, const char* text, bool is_hot) 
         color = mult_color(color, 1.5);
     roundedBoxColor(renderer, point1.x, point1.y, point2.x, point2.y, 20, color);   
 }
+
+void render_line(PointI a, PointI b, uint8_t thickness, uint32_t color) {
+    thickLineColor(renderer, a.x, a.y, b.x, b.y, thickness, color);
+}

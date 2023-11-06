@@ -36,7 +36,7 @@ typedef struct {
 
 typedef struct Group {
     PointI next_item_position;
-    PointI next_group_position;
+    PointI size;
     Alignment alignment;
     Padding padding;
     Layout layout;
@@ -55,9 +55,9 @@ typedef struct {
 
 
 void init_ui(void);
-void begin_ui(Layout layout, Alignment alignment, Padding padding);
+void begin_ui(Layout layout, Alignment alignment, Padding padding, PointI size);
 void end_ui(void);
-void begin_group(Layout layout, Alignment alignment, Padding padding);
+void begin_group(Layout layout, Alignment alignment, Padding padding, float fill_perc);
 void end_group(void);
 bool do_button(const char* text, Padding padding);
 void mouse_moved(int x, int y);

@@ -1,7 +1,9 @@
 #include "ui.h"
+#include "common.h"
 #include "render.h"
 #include "physics.h"
 #include <assert.h>
+#include <stdlib.h>
 
 #define MENU_BUTTON_WIDTH 300
 #define MENU_BUTTON_HEIGHT 150
@@ -31,18 +33,23 @@ void end_group(void) {
     if (ui.group_count > 1) {
         Group* current_group = peek_group();
         Group* parent_group = peek_parent_group();
-        if (parent_group->layout == HORIZONTAL_LAYOUT) {
-            parent_group->next_group_position.x += current_group->padding.right;
-        } else {
-            parent_group->next_group_position.y += current_group->padding.bottom;
-        }
+        // padding should not affect the other group layout but only internal position
+        // of the items
+        // maybe only keep it for the items and not for the groups
+        // figure this out later
+        /* if (parent_group->layout == HORIZONTAL_LAYOUT) { */
+        /*     parent_group->next_group_position.x += current_group->padding.right; */
+        /* } else { */
+        /*     parent_group->next_group_position.y += current_group->padding.bottom; */
+        /* } */
     }
     ui.group_count--;
 }
 
-void begin_ui(Layout layout, Alignment alignment, Padding padding) {
+void begin_ui(Layout layout, Alignment alignment, Padding padding, PointI size) {
     ui.id_count = 0;
-    begin_group(layout, alignment, padding);
+    begin_group(layout, alignment, padding, 1);
+    peek_group()->size = size;
 }
 
 void end_ui(void) {
@@ -51,19 +58,40 @@ void end_ui(void) {
     end_group();
 }
 
-void begin_group(Layout layout, Alignment alignment, Padding padding) {
-    assert(ui.group_count < MAX_GROUPS);
-    PointI next_group_position = ui.group_count > 0 ? peek_group()->next_group_position :
-        (PointI) { 0, 0 };
-    next_group_position.x += padding.left;
-    next_group_position.y += padding.top;
+void begin_group(Layout layout, Alignment alignment, Padding padding, float fill_perc) {
     size_t n_groups = ui.group_count;
+    assert(n_groups < MAX_GROUPS);
+    if ((alignment == LEFT_ALIGNMENT || alignment == RIGHT_ALIGNMENT) && layout == HORIZONTAL_LAYOUT) {
+        fprintf(stderr, "Left/Right alignments are supported only in a vertical layout\n");
+        exit(EXIT_FAILURE);
+    }
+    if ((alignment == TOP_ALIGNMENT || alignment == BOTTOM_ALIGNMENT) && layout == VERTICAL_LAYOUT) {
+        fprintf(stderr, "Top/Bottom alignments are supported only in a horizontal layout\n");
+        exit(EXIT_FAILURE);
+    }
+    Group* parent = NULL;
+    PointI next_item_position = (PointI) { 0, 0 };
+    PointI size = (PointI) {0, 0};
+    if (n_groups > 0) {
+        parent = peek_group();
+        next_item_position = parent->next_item_position;
+        size = parent->size;
+        if (parent->layout == HORIZONTAL_LAYOUT) {
+            size.x *= fill_perc;
+            parent->next_item_position.x += size.x;
+        } else {
+            size.y *= fill_perc;
+            parent->next_item_position.y += size.y;
+        }
+    }
+    next_item_position.x += padding.left;
+    next_item_position.y += padding.top;
     ui.groups[n_groups] = (Group) {
-        .next_item_position = next_group_position,
-        .next_group_position = next_group_position,
+        .next_item_position = next_item_position,
         .layout = layout,
         .alignment = alignment,
-        .padding = padding
+        .padding = padding,
+        .size = size
     };
     ui.group_count++;
 }
@@ -83,8 +111,37 @@ bool do_button(const char* text, Padding padding) {
     bool hot = is_hot(button_id);
     Group* group = peek_group();
     PointI start_position = group->next_item_position;
-    start_position.x += padding.left;
-    start_position.y += padding.top;
+    switch (group->alignment) {
+        case CENTER_ALIGNMENT:
+            if (group->layout == VERTICAL_LAYOUT) {
+                start_position.x =
+                    start_position.x + (int) (group->size.x / 2) - (int) MENU_BUTTON_WIDTH / 2;
+            } else {
+                start_position.y =
+                    start_position.y + (int) (group->size.y / 2) - (int) MENU_BUTTON_HEIGHT / 2;
+            }
+            break;
+        case LEFT_ALIGNMENT:
+            start_position.x += padding.left;
+            start_position.y += padding.top;
+            break;
+        case RIGHT_ALIGNMENT:
+            start_position.x = start_position.x + group->size.x - MENU_BUTTON_WIDTH - padding.right;
+            start_position.y += padding.top;
+            break;
+        case TOP_ALIGNMENT:
+            start_position.x += padding.left;
+            start_position.y += padding.top;
+            break;
+        case BOTTOM_ALIGNMENT:
+            start_position.x += padding.left;
+            start_position.y = start_position.y + group->size.y - MENU_BUTTON_HEIGHT - padding.bottom;
+            break;
+        default:
+            // unreachable
+            exit(EXIT_FAILURE);
+            break;
+    }
     PointI end_position = {
         start_position.x + MENU_BUTTON_WIDTH,
         start_position.y + MENU_BUTTON_HEIGHT
@@ -117,9 +174,9 @@ bool do_button(const char* text, Padding padding) {
     if (ui.group_count > 1) {
         Group* parent_group = peek_parent_group();
         if (parent_group->layout == HORIZONTAL_LAYOUT) {
-            parent_group->next_group_position.x = fmax(parent_group->next_group_position.x, next_position.x);
+            parent_group->next_item_position.x = fmax(parent_group->next_item_position.x, next_position.x);
         } else {
-            parent_group->next_group_position.y = fmax(parent_group->next_group_position.y, next_position.y);
+            parent_group->next_item_position.y = fmax(parent_group->next_item_position.y, next_position.y);
         }
     }
 
