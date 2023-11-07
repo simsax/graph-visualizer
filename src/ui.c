@@ -8,6 +8,9 @@
 #define MENU_BUTTON_WIDTH 300
 #define MENU_BUTTON_HEIGHT 150
 
+// TODO: add scrollbar when items overflow in a group
+// TODO: client should specify button size (or let it dynamically grow with text)
+//
 static Ui ui;
 
 void init_ui(void) {
@@ -33,15 +36,18 @@ void end_group(void) {
     ui.group_count--;
 }
 
-void begin_ui(Layout layout, Alignment alignment, Padding padding, PointI size) {
+void begin_ui(Layout layout, Alignment alignment, Padding padding, PointI size, PointI starting_pos) {
     ui.id_count = 0;
     begin_group(layout, alignment, padding, 1);
     size.x = size.x - padding.left - padding.right;
     size.y = size.y - padding.top - padding.bottom;
-    peek_group()->size = size;
+
+    Group* root = peek_group();
+    root->next_item_position.x += starting_pos.x;
+    root->next_item_position.y += starting_pos.y;
+    root->size = size;
 
 #if DEBUG_UI
-    Group* root = peek_group();
     render_rect(root->next_item_position, (PointI) {root->next_item_position.x + size.x,
             root->next_item_position.y + size.y}, YELLOW);
 #endif

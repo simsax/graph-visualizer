@@ -55,7 +55,7 @@ typedef struct {
 
 
 void init_ui(void);
-void begin_ui(Layout layout, Alignment alignment, Padding padding, PointI size);
+void begin_ui(Layout layout, Alignment alignment, Padding padding, PointI size, PointI starting_pos);
 void end_ui(void);
 void begin_group(Layout layout, Alignment alignment, Padding padding, float fill_perc);
 void end_group(void);

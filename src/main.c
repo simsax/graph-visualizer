@@ -92,9 +92,6 @@ int main(void)
         switch (simulation_state) {
             case MENU_STATE: 
                 {
-                    // TODOs:
-                    // group padding
-                    // add scrollbar when items overflow in a group
                     Padding button_padding = {
                         .top = 10,
                         .bottom = 10,
@@ -102,7 +99,9 @@ int main(void)
                         .right = 10
                     };
                     begin_ui(VERTICAL_LAYOUT, LEFT_ALIGNMENT, (Padding) {10, 10, 10, 10}, 
-                            (PointI) { SCREEN_WIDTH, SCREEN_HEIGHT });
+                            (PointI) { SCREEN_WIDTH, SCREEN_HEIGHT }, (PointI) {0, 0});
+                    /* begin_ui(HORIZONTAL_LAYOUT, TOP_ALIGNMENT, (Padding) {10, 10, 10, 10}, */ 
+                    /*         (PointI) { 800, 300 }, (PointI) {0, 540}); */
                     begin_group(HORIZONTAL_LAYOUT, TOP_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
                     begin_group(HORIZONTAL_LAYOUT, BOTTOM_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
                     if (do_button("Start", button_padding)) {
