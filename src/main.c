@@ -95,15 +95,16 @@ int main(void)
                     // TODOs:
                     // group padding
                     // add scrollbar when items overflow in a group
-                    begin_ui(VERTICAL_LAYOUT, LEFT_ALIGNMENT, (Padding) {0, 0, 0, 0}, 
-                            (PointI) { SCREEN_WIDTH, SCREEN_HEIGHT });
-                    begin_group(HORIZONTAL_LAYOUT, CENTER_ALIGNMENT, (Padding) {0, 0, 0, 0}, 0.5);
                     Padding button_padding = {
-                        .top = 0,
-                        .bottom = 0,
-                        .left = 0,
-                        .right = 0
+                        .top = 10,
+                        .bottom = 10,
+                        .left = 10,
+                        .right = 10
                     };
+                    begin_ui(VERTICAL_LAYOUT, LEFT_ALIGNMENT, (Padding) {10, 10, 10, 10}, 
+                            (PointI) { SCREEN_WIDTH, SCREEN_HEIGHT });
+                    begin_group(HORIZONTAL_LAYOUT, TOP_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
+                    begin_group(HORIZONTAL_LAYOUT, BOTTOM_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
                     if (do_button("Start", button_padding)) {
                         printf("Start\n");
                         /* simulation_state = RUNNING_STATE; */
@@ -115,6 +116,8 @@ int main(void)
                     if (do_button("Foo", button_padding)) {
                         printf("Foo\n");
                     }
+                    end_group();
+                    begin_group(HORIZONTAL_LAYOUT, TOP_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
                     if (do_button("Nothing", button_padding)) {
                         printf("Nothing\n");
                     }
@@ -125,7 +128,9 @@ int main(void)
                         printf("Bar\n");
                     }
                     end_group();
-                    begin_group(VERTICAL_LAYOUT, LEFT_ALIGNMENT, (Padding) {0, 0, 0, 0}, 0.5);
+                    end_group();
+                    begin_group(HORIZONTAL_LAYOUT, BOTTOM_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
+                    begin_group(VERTICAL_LAYOUT, LEFT_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
                     if (do_button("Start", button_padding)) {
                         printf("Start2\n");
                         /* simulation_state = RUNNING_STATE; */
@@ -137,6 +142,8 @@ int main(void)
                     if (do_button("Foo", button_padding)) {
                         printf("Foo2\n");
                     }
+                    end_group();
+                    begin_group(VERTICAL_LAYOUT, RIGHT_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
                     if (do_button("Nothing", button_padding)) {
                         printf("Nothing2\n");
                     }
@@ -146,6 +153,7 @@ int main(void)
                     if (do_button("Bar", button_padding)) {
                         printf("Bar2\n");
                     }
+                    end_group();
                     end_group();
                     end_ui();
                 }
@@ -158,9 +166,10 @@ int main(void)
                 break;
         }
 
-        // debug
+#if DEBUG_UI
         render_line((PointI) {960, 0}, (PointI) {960, 1080}, 1, RED);
         render_line((PointI) {0, 540}, (PointI) {1920, 540}, 1, RED);
+#endif
 
         SDL_RenderPresent(renderer);
     }

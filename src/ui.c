@@ -30,26 +30,21 @@ static Group* peek_parent_group(void) {
 
 void end_group(void) {
     assert(ui.group_count > 0);
-    if (ui.group_count > 1) {
-        Group* current_group = peek_group();
-        Group* parent_group = peek_parent_group();
-        // padding should not affect the other group layout but only internal position
-        // of the items
-        // maybe only keep it for the items and not for the groups
-        // figure this out later
-        /* if (parent_group->layout == HORIZONTAL_LAYOUT) { */
-        /*     parent_group->next_group_position.x += current_group->padding.right; */
-        /* } else { */
-        /*     parent_group->next_group_position.y += current_group->padding.bottom; */
-        /* } */
-    }
     ui.group_count--;
 }
 
 void begin_ui(Layout layout, Alignment alignment, Padding padding, PointI size) {
     ui.id_count = 0;
     begin_group(layout, alignment, padding, 1);
+    size.x = size.x - padding.left - padding.right;
+    size.y = size.y - padding.top - padding.bottom;
     peek_group()->size = size;
+
+#if DEBUG_UI
+    Group* root = peek_group();
+    render_rect(root->next_item_position, (PointI) {root->next_item_position.x + size.x,
+            root->next_item_position.y + size.y}, YELLOW);
+#endif
 }
 
 void end_ui(void) {
@@ -78,12 +73,15 @@ void begin_group(Layout layout, Alignment alignment, Padding padding, float fill
         size = parent->size;
         if (parent->layout == HORIZONTAL_LAYOUT) {
             size.x *= fill_perc;
+            // parent doesn't care about children groups internal padding
             parent->next_item_position.x += size.x;
         } else {
             size.y *= fill_perc;
             parent->next_item_position.y += size.y;
         }
     }
+    size.x = size.x - padding.left - padding.right;
+    size.y = size.y - padding.top - padding.bottom;
     next_item_position.x += padding.left;
     next_item_position.y += padding.top;
     ui.groups[n_groups] = (Group) {
@@ -94,6 +92,13 @@ void begin_group(Layout layout, Alignment alignment, Padding padding, float fill
         .size = size
     };
     ui.group_count++;
+
+#if DEBUG_UI
+    if (n_groups > 0) {
+        render_rect(next_item_position, (PointI) {next_item_position.x + size.x,
+                next_item_position.y + size.y}, BLUE);
+    }
+#endif
 }
 
 static bool is_hot(ui_id item_id) {
@@ -171,6 +176,7 @@ bool do_button(const char* text, Padding padding) {
         group->next_item_position.y = next_position.y;
     }
 
+    // this behavior will go away when I'll add scrollbars
     if (ui.group_count > 1) {
         Group* parent_group = peek_parent_group();
         if (parent_group->layout == HORIZONTAL_LAYOUT) {

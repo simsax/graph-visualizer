@@ -143,13 +143,17 @@ static uint32_t mult_color(uint32_t color, float factor) {
     return HEX(red, green, blue, 0xFF);
 }
 
-void render_button(PointI point1, PointI point2, const char* text, bool is_hot) {
+void render_button(PointI a, PointI b, const char* text, bool is_hot) {
     uint32_t color = COLOR6;
     if (is_hot)
         color = mult_color(color, 1.5);
-    roundedBoxColor(renderer, point1.x, point1.y, point2.x, point2.y, 20, color);   
+    roundedBoxColor(renderer, a.x, a.y, b.x, b.y, 20, color);   
 }
 
 void render_line(PointI a, PointI b, uint8_t thickness, uint32_t color) {
     thickLineColor(renderer, a.x, a.y, b.x, b.y, thickness, color);
+}
+
+void render_rect(PointI a, PointI b, uint32_t color) {
+    rectangleColor(renderer, a.x, a.y, b.x, b.y, color);
 }
