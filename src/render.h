@@ -60,7 +60,8 @@ void render_graph(Graph* graph, bool use_label);
 void render_line(PointI a, PointI b, uint8_t thickness, uint32_t color);
 void render_rect(PointI a, PointI b, uint32_t color);
 void render_text(const char* text, PointI position, float size);
-void render_button(PointI a, PointI b, int text_padding, const char* text, bool is_hot, int size);
+void render_button(const char* text, bool is_hot, bool is_active, PointI start_position,
+        PointI text_size, PointI button_size);
 
 extern SDL_Renderer* renderer;
 

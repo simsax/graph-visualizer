@@ -93,20 +93,24 @@ int main(void)
                         .left = 0,
                         .right = 0
                     };
-                    int button_size = 69;
-                    begin_ui(VERTICAL_LAYOUT, CENTER_ALIGNMENT, (Padding) {SCREEN_HEIGHT / 2 - 160, 0, 0, 0}, 
+                    int text_size = 69;
+                    int button_width = 300;
+                    int button_height = 90;
+                    int n_buttons = 2;
+                    int layout_padding_top = 
+                        n_buttons * button_height + (n_buttons - 1) * (button_padding.top);// + button_padding.bottom);
+                    begin_ui(VERTICAL_LAYOUT, CENTER_ALIGNMENT, 
+                            (Padding) { (SCREEN_HEIGHT - layout_padding_top) * 0.5, 0, 0, 0 },
                             (PointI) { SCREEN_WIDTH, SCREEN_HEIGHT }, (PointI) {0, 0});
-                    if (do_button("Start", button_padding, button_size)) {
-                        printf("Start\n");
+                    if (do_button("Start", button_padding, text_size, button_width, button_height)) {
                         simulation_state = RUNNING_STATE;
                     }
-                    if (do_button("Quit", button_padding, button_size)) {
-                        printf("Quit\n");
+                    if (do_button("Quit", button_padding, text_size, button_width, button_height)) {
                         simulation_state = QUIT_STATE;
                     }
                     end_ui();
                 }
-                render_text("Hello World!", (PointI) { 0, 0 }, 18);
+                /* render_text("Hello World!", (PointI) { 0, 0 }, 18); */
                 break;
             case RUNNING_STATE:
             case PAUSED_STATE:

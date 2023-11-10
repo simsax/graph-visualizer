@@ -112,21 +112,28 @@ static bool is_active(ui_id item_id) {
     return item_id == ui.active_item;
 }
 
-bool do_button(const char* text, Padding padding, int size) {
+bool do_button(const char* text, Padding padding, int size, int width, int height) {
     // size is the pixel height of the text
     ui.id_count++;
     ui_id button_id = ui.id_count;
     bool result = false;
     bool hot = is_hot(button_id);
+    bool active = is_active(button_id);
     Group* group = peek_group();
     PointI start_position = group->next_item_position;
+
+    int button_width = width;
+    int button_height = height;
     float scaling_factor = (float) size / FONT_OFFSET_Y;
     int char_width = scaling_factor * FONT_OFFSET_X;
     size_t text_len = strlen(text);
     int text_width = text_len * char_width;
     int text_padding = 4;
-    int button_width = text_padding * 2 + text_width;
-    int button_height = text_padding * 2 + size;
+    if (button_width == 0)
+        button_width = text_padding * 2 + text_width;
+    if (button_height == 0)
+        button_height = text_padding * 2 + size;
+
     switch (group->alignment) {
         case CENTER_ALIGNMENT:
             if (group->layout == VERTICAL_LAYOUT) {
@@ -163,7 +170,7 @@ bool do_button(const char* text, Padding padding, int size) {
         start_position.y + button_height
     };
     
-    if (is_active(button_id) && ui.mouse_up == LEFT_BUTTON) {
+    if (active && ui.mouse_up == LEFT_BUTTON) {
         if (hot) {
             result = true;
         }
@@ -198,7 +205,8 @@ bool do_button(const char* text, Padding padding, int size) {
     }
 
     // TODO: make it graphics API agnostic
-    render_button(start_position, end_position, text_padding, text, hot, size);
+    render_button(text, hot, active, start_position, (PointI) { text_width, size },
+            (PointI) { button_width, button_height });
     return result;
 }
 
