@@ -5,12 +5,9 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#define MENU_BUTTON_WIDTH 300
-#define MENU_BUTTON_HEIGHT 150
-
 // TODO: add scrollbar when items overflow in a group
 // TODO: client should specify button size (or let it dynamically grow with text)
-//
+
 static Ui ui;
 
 void init_ui(void) {
@@ -115,21 +112,29 @@ static bool is_active(ui_id item_id) {
     return item_id == ui.active_item;
 }
 
-bool do_button(const char* text, Padding padding) {
+bool do_button(const char* text, Padding padding, int size) {
+    // size is the pixel height of the text
     ui.id_count++;
     ui_id button_id = ui.id_count;
     bool result = false;
     bool hot = is_hot(button_id);
     Group* group = peek_group();
     PointI start_position = group->next_item_position;
+    float scaling_factor = (float) size / FONT_OFFSET_Y;
+    int char_width = scaling_factor * FONT_OFFSET_X;
+    size_t text_len = strlen(text);
+    int text_width = text_len * char_width;
+    int text_padding = 4;
+    int button_width = text_padding * 2 + text_width;
+    int button_height = text_padding * 2 + size;
     switch (group->alignment) {
         case CENTER_ALIGNMENT:
             if (group->layout == VERTICAL_LAYOUT) {
                 start_position.x =
-                    start_position.x + (int) (group->size.x / 2) - (int) MENU_BUTTON_WIDTH / 2;
+                    start_position.x + (int) (group->size.x / 2) - (int) button_width / 2;
             } else {
                 start_position.y =
-                    start_position.y + (int) (group->size.y / 2) - (int) MENU_BUTTON_HEIGHT / 2;
+                    start_position.y + (int) (group->size.y / 2) - (int) button_height / 2;
             }
             break;
         case LEFT_ALIGNMENT:
@@ -137,7 +142,7 @@ bool do_button(const char* text, Padding padding) {
             start_position.y += padding.top;
             break;
         case RIGHT_ALIGNMENT:
-            start_position.x = start_position.x + group->size.x - MENU_BUTTON_WIDTH - padding.right;
+            start_position.x = start_position.x + group->size.x - button_width - padding.right;
             start_position.y += padding.top;
             break;
         case TOP_ALIGNMENT:
@@ -146,7 +151,7 @@ bool do_button(const char* text, Padding padding) {
             break;
         case BOTTOM_ALIGNMENT:
             start_position.x += padding.left;
-            start_position.y = start_position.y + group->size.y - MENU_BUTTON_HEIGHT - padding.bottom;
+            start_position.y = start_position.y + group->size.y - button_height - padding.bottom;
             break;
         default:
             // unreachable
@@ -154,8 +159,8 @@ bool do_button(const char* text, Padding padding) {
             break;
     }
     PointI end_position = {
-        start_position.x + MENU_BUTTON_WIDTH,
-        start_position.y + MENU_BUTTON_HEIGHT
+        start_position.x + button_width,
+        start_position.y + button_height
     };
     
     if (is_active(button_id) && ui.mouse_up == LEFT_BUTTON) {
@@ -193,7 +198,7 @@ bool do_button(const char* text, Padding padding) {
     }
 
     // TODO: make it graphics API agnostic
-    render_button(start_position, end_position, text, hot);
+    render_button(start_position, end_position, text_padding, text, hot, size);
     return result;
 }
 

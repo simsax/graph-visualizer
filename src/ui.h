@@ -59,7 +59,7 @@ void begin_ui(Layout layout, Alignment alignment, Padding padding, PointI size, 
 void end_ui(void);
 void begin_group(Layout layout, Alignment alignment, Padding padding, float fill_perc);
 void end_group(void);
-bool do_button(const char* text, Padding padding);
+bool do_button(const char* text, Padding padding, int size);
 void mouse_moved(int x, int y);
 void mouse_down(MouseButton button);
 void mouse_up(MouseButton button);

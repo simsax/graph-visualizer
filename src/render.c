@@ -1,5 +1,7 @@
 #include <assert.h>
+#include "SDL_image.h"
 #include "SDL2_gfxPrimitives.h"
+#include "SDL_render.h"
 #include "render.h"
 #include "graph.h"
 
@@ -7,6 +9,7 @@
 #define VERTEX_COLOR COLOR7
 #define SELECTED_VERTEX_COLOR COLOR7L
 #define EDGE_COLOR COLOR10
+#define N_COL_FONT_ATLAS 18
 
 typedef struct {
     SDL_Window* sdl_window;
@@ -15,8 +18,17 @@ typedef struct {
 } Window;
 
 SDL_Renderer* renderer;
-TTF_Font* font;
 Window window;
+// 128x64, each char is 7x7, there are 18 chars in each line
+static SDL_Texture* font_atlas;
+
+SDL_Texture* load_texture(const char* path) {
+    return SDL(IMG_LoadTexture(renderer, path));
+}
+
+void free_texture(SDL_Texture* texture) {
+    SDL_DestroyTexture(texture);
+}
 
 void init_window(const char* name, int width, int height) {
     window.sdl_window = SDL(SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED,
@@ -25,53 +37,31 @@ void init_window(const char* name, int width, int height) {
     window.height = height;
 }
 
-void init_renderer() {
-    SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "1" ); // linear filtering
+void init_renderer(void) {
+    SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "0" ); // nearest filtering
     renderer = SDL(SDL_CreateRenderer(
         window.sdl_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC));
-    font = SDL(TTF_OpenFont("../fonts/UbuntuMono-R.ttf", 300));
+    font_atlas = load_texture("../fonts/charmap-oldschool_white.png");
 }
 
-int get_window_height() {
+int get_window_height(void) {
     return window.height;
 }
 
-int get_window_width() {
+int get_window_width(void) {
     return window.width;
 }
 
-void free_renderer() {
-    TTF_CloseFont(font);
+void free_renderer(void) {
+    free_texture(font_atlas);
     SDL_DestroyRenderer(renderer);
 }
 
-void free_window() {
+void free_window(void) {
     SDL_DestroyWindow(window.sdl_window);
 }
 
-void init_text(Text* text, const char* message, uint32_t color, int size) {
-    // consider using a global font and passing size as parameter
-    SDL_Surface* surface = SDL(TTF_RenderText_Solid(font, message, (SDL_Color){RGBA(color)}));
-    SDL_Texture* texture = SDL(SDL_CreateTextureFromSurface(renderer, surface));
-    text->texture = texture;
-    text->height = surface->h;
-    text->width = surface->w;
-    text->color = color;
-    SDL_FreeSurface(surface);
-}
-
-void free_text(Text* text) {
-    SDL_DestroyTexture(text->texture);
-}
-
-void render_text(Text* text, PointF p) {
-    int x_centered = (int) (p.x - text->width / 2);
-    int y_centered = (int) (p.y - text->height / 2);
-    SDL_Rect message_rect = {.x = x_centered, .y = y_centered, .w = text->width, .h = text->height};
-    SDL_RenderCopy(renderer, text->texture, NULL, &message_rect);
-}
-
-void render_background() {
+void render_background(void) {
     SDL_SetRenderDrawColor(renderer, RGBA(BACKGROUND_COLOR));
     SDL_RenderClear(renderer);
 }
@@ -101,8 +91,9 @@ static PointI ndc_to_screen_coords(PointF ndc) {
 
 static void render_node(Node* node, bool use_label, int radius, uint32_t color) {
     if (use_label) {
-        render_circle_outline_filled(node->position, node->text.height, radius * 1.2, BACKGROUND_COLOR, color);
-        render_text(&node->text, node->position);
+        // TODO
+        /* render_circle_outline_filled(node->position, node->text.height, radius * 1.2, BACKGROUND_COLOR, color); */
+        /* render_text(&node->text, node->position); */
     } else {
         render_circle_filled(node->position, radius, color);
     }
@@ -143,13 +134,6 @@ static uint32_t mult_color(uint32_t color, float factor) {
     return HEX(red, green, blue, 0xFF);
 }
 
-void render_button(PointI a, PointI b, const char* text, bool is_hot) {
-    uint32_t color = COLOR6;
-    if (is_hot)
-        color = mult_color(color, 1.5);
-    roundedBoxColor(renderer, a.x, a.y, b.x, b.y, 20, color);   
-}
-
 void render_line(PointI a, PointI b, uint8_t thickness, uint32_t color) {
     thickLineColor(renderer, a.x, a.y, b.x, b.y, thickness, color);
 }
@@ -157,3 +141,34 @@ void render_line(PointI a, PointI b, uint8_t thickness, uint32_t color) {
 void render_rect(PointI a, PointI b, uint32_t color) {
     rectangleColor(renderer, a.x, a.y, b.x, b.y, color);
 }
+
+static void render_char(char c, int x, int y, int width, int height) {
+    int index = c - ' ';
+    int x_atlas = (index % N_COL_FONT_ATLAS) * FONT_OFFSET_X;
+    int y_atlas = (index / N_COL_FONT_ATLAS) * FONT_OFFSET_Y;
+    SDL_Rect src = { x_atlas, y_atlas, FONT_OFFSET_X, FONT_OFFSET_Y };
+    SDL_Rect dest = { x, y, width, height };
+    SDL_RenderCopy(renderer, font_atlas, &src, &dest);
+}
+
+void render_text(const char* text, PointI position, float size) {
+    int x = position.x;
+    int y = position.y;
+    float scaling_factor = size / FONT_OFFSET_Y;
+    int char_width = scaling_factor * FONT_OFFSET_X;
+    for (size_t i = 0; i < strlen(text); i++) {
+        char c = text[i];
+        render_char(c, x, y, char_width, size);
+        x += char_width;
+    }
+}
+
+void render_button(PointI a, PointI b, int text_padding, const char* text, bool is_hot, int size) {
+    uint32_t color = COLOR6;
+    if (is_hot)
+        color = mult_color(color, 1.5);
+    roundedBoxColor(renderer, a.x, a.y, b.x, b.y, 20, color);   
+    PointI text_position = { a.x + text_padding, a.y + text_padding };
+    render_text(text, text_position, size);
+}
+

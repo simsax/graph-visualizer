@@ -19,9 +19,9 @@ typedef enum {
     COMPLETE_CONFIG
 } GraphConfig;
 
+// now that node is slimmer this may be useless
 typedef struct Node {
     uint32_t label;
-    Text text;
     PointF position;
 } Node;
 

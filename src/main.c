@@ -19,11 +19,6 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    if (TTF_Init() < 0) {
-        SDL_ERROR();
-        exit(EXIT_FAILURE);
-    }
-
     init_window("Graph Visualizer", SCREEN_WIDTH, SCREEN_HEIGHT);
     init_renderer();
 
@@ -95,67 +90,23 @@ int main(void)
                     Padding button_padding = {
                         .top = 10,
                         .bottom = 10,
-                        .left = 10,
-                        .right = 10
+                        .left = 0,
+                        .right = 0
                     };
-                    begin_ui(VERTICAL_LAYOUT, LEFT_ALIGNMENT, (Padding) {10, 10, 10, 10}, 
+                    int button_size = 69;
+                    begin_ui(VERTICAL_LAYOUT, CENTER_ALIGNMENT, (Padding) {SCREEN_HEIGHT / 2 - 160, 0, 0, 0}, 
                             (PointI) { SCREEN_WIDTH, SCREEN_HEIGHT }, (PointI) {0, 0});
-                    /* begin_ui(HORIZONTAL_LAYOUT, TOP_ALIGNMENT, (Padding) {10, 10, 10, 10}, */ 
-                    /*         (PointI) { 800, 300 }, (PointI) {0, 540}); */
-                    begin_group(HORIZONTAL_LAYOUT, TOP_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
-                    begin_group(HORIZONTAL_LAYOUT, BOTTOM_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
-                    if (do_button("Start", button_padding)) {
+                    if (do_button("Start", button_padding, button_size)) {
                         printf("Start\n");
-                        /* simulation_state = RUNNING_STATE; */
+                        simulation_state = RUNNING_STATE;
                     }
-                    if (do_button("Quit", button_padding)) {
+                    if (do_button("Quit", button_padding, button_size)) {
                         printf("Quit\n");
-                        /* simulation_state = QUIT_STATE; */
+                        simulation_state = QUIT_STATE;
                     }
-                    if (do_button("Foo", button_padding)) {
-                        printf("Foo\n");
-                    }
-                    end_group();
-                    begin_group(HORIZONTAL_LAYOUT, TOP_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
-                    if (do_button("Nothing", button_padding)) {
-                        printf("Nothing\n");
-                    }
-                    if (do_button("Miao", button_padding)) {
-                        printf("Miao\n");
-                    }
-                    if (do_button("Bar", button_padding)) {
-                        printf("Bar\n");
-                    }
-                    end_group();
-                    end_group();
-                    begin_group(HORIZONTAL_LAYOUT, BOTTOM_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
-                    begin_group(VERTICAL_LAYOUT, LEFT_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
-                    if (do_button("Start", button_padding)) {
-                        printf("Start2\n");
-                        /* simulation_state = RUNNING_STATE; */
-                    }
-                    if (do_button("Quit", button_padding)) {
-                        printf("Quit2\n");
-                        /* simulation_state = QUIT_STATE; */
-                    }
-                    if (do_button("Foo", button_padding)) {
-                        printf("Foo2\n");
-                    }
-                    end_group();
-                    begin_group(VERTICAL_LAYOUT, RIGHT_ALIGNMENT, (Padding) {10, 10, 10, 10}, 0.5);
-                    if (do_button("Nothing", button_padding)) {
-                        printf("Nothing2\n");
-                    }
-                    if (do_button("Miao", button_padding)) {
-                        printf("Miao2\n");
-                    }
-                    if (do_button("Bar", button_padding)) {
-                        printf("Bar2\n");
-                    }
-                    end_group();
-                    end_group();
                     end_ui();
                 }
+                render_text("Hello World!", (PointI) { 0, 0 }, 18);
                 break;
             case RUNNING_STATE:
             case PAUSED_STATE:
@@ -175,7 +126,6 @@ int main(void)
     free_graph(&graph);
     free_renderer();
     free_window();
-    TTF_Quit();
     SDL_Quit();
 
     return 0;

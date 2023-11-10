@@ -5,9 +5,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "SDL.h"
-#include "SDL_ttf.h"
 
-#define DEBUG_UI 1
+#define DEBUG_UI 0
 #define SDL_ERROR() fprintf(stderr, "SDL_Error: %s\n", SDL_GetError())
 
 typedef struct {

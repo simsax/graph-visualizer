@@ -9,7 +9,6 @@ static void init_node(Node* node, uint32_t label, uint32_t label_color, int labe
     char label_str[5];
     node->label = label;
     sprintf(&label_str[0], "%d", node->label);
-    init_text(&node->text, &label_str[0], label_color, label_size);
     node->position = (PointF) { -1, -1 };
 }
 
@@ -199,9 +198,6 @@ void init_graph(
 
 void free_graph(Graph* graph)
 {
-    for (size_t i = 0; i < graph->n_nodes; i++) {
-        free_text(&graph->nodes[i].text);
-    }
     free(graph->nodes);
     for (size_t i = 0; i < graph->n_nodes; i++) {
         for (EdgeNode* node = graph->adj_list[i]; node != NULL;) {

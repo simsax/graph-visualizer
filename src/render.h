@@ -41,30 +41,26 @@
 #define COLOR9 0xFFAC8071
 #define COLOR10 0xFFDBD0A8
 
+#define FONT_OFFSET_X 7
+#define FONT_OFFSET_Y 9
+
 typedef struct Node Node;
 typedef struct Graph Graph;
 
-typedef struct Text {
-    SDL_Texture* texture;
-    int height;
-    int width;
-    uint32_t color;
-} Text;
-
 void init_window(const char* name, int width, int height);
-int get_window_height();
-int get_window_width();
-void free_window();
-void init_renderer();
-void free_renderer();
-void init_text(Text* text, const char* message, uint32_t color, int size);
-void free_text(Text* text);
-void render_text(Text* text, PointF p);
-void render_background();
+int get_window_height(void);
+int get_window_width(void);
+void free_window(void);
+void init_renderer(void);
+void free_renderer(void);
+SDL_Texture* load_texture(const char* path);
+void free_texture(SDL_Texture* texture);
+void render_background(void);
 void render_graph(Graph* graph, bool use_label);
-void render_button(PointI a, PointI b, const char* text, bool is_hot);
 void render_line(PointI a, PointI b, uint8_t thickness, uint32_t color);
 void render_rect(PointI a, PointI b, uint32_t color);
+void render_text(const char* text, PointI position, float size);
+void render_button(PointI a, PointI b, int text_padding, const char* text, bool is_hot, int size);
 
 extern SDL_Renderer* renderer;
 
