@@ -141,12 +141,6 @@ static void init_adj_list(Graph* graph)
     }
 }
 
-/* static void generate_nodes_positions_poisson(Graph* graph) */
-/* { */
-/*     int radius = (int)calculate_radius(graph->n_nodes, 600); */
-/*     poisson_disk_sampling(graph->nodes, graph->n_nodes, radius, 30); */
-/* } */
-
 static void generate_nodes_positions_random(Graph* graph)
 {
     int width = get_window_width();
@@ -156,10 +150,6 @@ static void generate_nodes_positions_random(Graph* graph)
             = (PointF) { .x = rand_uniform() * width, .y = rand_uniform() * height };
     }
 }
-
-// static void generate_nodes_positions_spring(Graph* graph) {
-//     spring_layout(graph->nodes, graph->n_nodes);
-// }
 
 void init_graph(
     Graph* graph, GraphConfig config, bool directed, size_t num_vertices, int node_radius)
@@ -264,4 +254,12 @@ void update_cursor_position(int x, int y)
     // called only when mouse is moved
     cursor_position.x = x;
     cursor_position.y = y;
+}
+
+void increment_vertices(Graph* graph) {
+
+}
+
+void decrement_vertices(Graph* graph) {
+
 }

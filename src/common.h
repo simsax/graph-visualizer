@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include "SDL.h"
 
-#define DEBUG_UI 0
+#define DEBUG_UI 1
 #define SDL_ERROR() fprintf(stderr, "SDL_Error: %s\n", SDL_GetError())
 
 typedef struct {
@@ -21,6 +21,6 @@ typedef struct {
 
 
 void* SDL(void* ptr);
-float rand_uniform();
+float rand_uniform(void);
 
 #endif // COMMON_H

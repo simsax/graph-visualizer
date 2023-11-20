@@ -180,6 +180,7 @@ void render_button(const char* text, bool is_hot, bool is_active, PointI start_p
     }
     else if (is_hot)
         color = mult_color(color, 1.5);
+
     PointI text_position = { start_position.x + (button_size.x - text_size.x) * 0.5,
         start_position.y + (button_size.y - text_size.y) * 0.5, };
     PointI end_position = { start_position.x + button_size.x, start_position.y + button_size.y };
@@ -188,3 +189,11 @@ void render_button(const char* text, bool is_hot, bool is_active, PointI start_p
     render_text(text, text_position, text_size.y);
 }
 
+void render_textbox(const char* text, PointI position, PointI box_size, PointI text_size) {
+    PointI end_position = { position.x + box_size.x, position.y + box_size.y };
+    PointI text_position = { position.x + (box_size.x - text_size.x) * 0.5,
+        position.y + (box_size.y - text_size.y) * 0.5, };
+    uint32_t box_color = 0xFF222222;
+    boxColor(renderer, position.x, position.y, end_position.x, end_position.y, box_color);
+    render_text(text, text_position, text_size.y);
+}

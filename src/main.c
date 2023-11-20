@@ -88,34 +88,51 @@ int main(void)
             case MENU_STATE: 
                 {
                     Padding button_padding = {
-                        .top = 10,
-                        .bottom = 10,
+                        .top = 20,
+                        .bottom = 20,
                         .left = 0,
                         .right = 0
                     };
+
+                    Padding text_padding = {
+                        .top = 0,
+                        .bottom = 0,
+                        .left = 0,
+                        .right = 0
+                    };
+
                     int text_size = 69;
                     int button_width = 300;
                     int button_height = 90;
                     int n_buttons = 2;
                     int layout_padding_top = 
-                        n_buttons * button_height + (n_buttons - 1) * (button_padding.top);// + button_padding.bottom);
-                    begin_ui(VERTICAL_LAYOUT, CENTER_ALIGNMENT, 
-                            (Padding) { (SCREEN_HEIGHT - layout_padding_top) * 0.5, 0, 0, 0 },
+                        n_buttons * (button_height + button_padding.top + button_padding.bottom);
+                    begin_ui(HORIZONTAL_LAYOUT, CENTER_ALIGNMENT, 
+                            /* (Padding) { (SCREEN_HEIGHT - layout_padding_top) * 0.5, 0, 0, 0 }, */
+                            (Padding) { 0, 0, 0, 0 },
                             (PointI) { SCREEN_WIDTH, SCREEN_HEIGHT }, (PointI) {0, 0});
-                    if (do_button("Start", button_padding, text_size, button_width, button_height)) {
-                        simulation_state = RUNNING_STATE;
-                    }
-                    if (do_button("Quit", button_padding, text_size, button_width, button_height)) {
-                        simulation_state = QUIT_STATE;
-                    }
+                    /* do_textbox("69", text_padding, text_size, 0, 0); */
+                    do_input_uint(&graph.n_nodes, text_padding, text_size, 0, 0);
+                    // update_graph (destroy old one, make new? Or better, don't create
+                    // new shit until user presses start. When going back to main menu, destroy
+                    // old graph(?))
+                    
+                    /* if (do_button("Start", button_padding, text_size, button_width, button_height)) { */
+                    /*     simulation_state = RUNNING_STATE; */
+                    /* } */
+                    /* if (do_button("Quit", button_padding, text_size, button_width, button_height)) { */
+                    /*     simulation_state = QUIT_STATE; */
+                    /* } */
                     end_ui();
+                    /* render_text("Hello World!", (PointI) { 0, 0 }, 18); */
+                    break;
                 }
-                /* render_text("Hello World!", (PointI) { 0, 0 }, 18); */
-                break;
             case RUNNING_STATE:
             case PAUSED_STATE:
-                render_graph(&graph, false);
-                break;
+                {
+                    render_graph(&graph, false);
+                    break;
+                }
             default:
                 break;
         }

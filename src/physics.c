@@ -69,7 +69,7 @@ void init_spring_layout(size_t num_vertices) {
     origin = vec2(screen_width / 2, screen_height / 2);
 }
 
-void free_spring_layout() {
+void free_spring_layout(void) {
     free(forces);
 }
 
@@ -178,3 +178,4 @@ bool intersect_point(Aabb* a, PointI point) {
 // current problems: how to choose t with respect to the number of nodes
 // how to balance gravity
 // find a more aesthetic way to generate random graphs (forest fire propagation)
+

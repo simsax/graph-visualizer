@@ -47,6 +47,8 @@ void init_graph(Graph* graph, GraphConfig config, bool directed, size_t num_vert
 void free_graph(Graph* graph);
 void update_graph(Graph* graph, double delta_time);
 bool exists_edge(Graph* graph, size_t v1, size_t v2);
+void increment_vertices(Graph* graph);
+void decrement_vertices(Graph* graph);
 void drag();
 void undrag();
 void update_cursor_position(int x, int y);
