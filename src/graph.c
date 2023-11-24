@@ -245,9 +245,9 @@ bool exists_edge(Graph* graph, size_t v1, size_t v2)
     return false;
 }
 
-void drag() { dragging = true; }
+void drag(void) { dragging = true; }
 
-void undrag() { dragging = false; }
+void undrag(void) { dragging = false; }
 
 void update_cursor_position(int x, int y)
 {

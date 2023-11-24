@@ -6,6 +6,8 @@
 #define MAX_BUTTONS 5
 #define MAX_GROUPS 16
 
+#define CHAR_SIZE(size) ((PointI) { (size) * FONT_OFFSET_X / FONT_OFFSET_Y, (size) })
+
 typedef size_t ui_id;
 
 typedef enum {
@@ -49,12 +51,12 @@ typedef struct {
     MouseButton mouse_down;
     MouseButton mouse_up; 
     ui_id id_count;
+    bool dropdown_open;
     size_t group_count;
     Group groups[MAX_GROUPS];
 } Ui;
 
 
-// TODO: add color as input params to ui items
 void init_ui(void);
 void begin_ui(Layout layout, Alignment alignment, Padding padding, PointI size, PointI starting_pos);
 void end_ui(void);
@@ -63,9 +65,13 @@ void end_group(void);
 void mouse_moved(int x, int y);
 void mouse_down(MouseButton button);
 void mouse_up(MouseButton button);
-bool do_button(const char* text, Padding padding, int size, PointI button_pos, PointI button_size);
-void do_textbox(const char *text, Padding padding, int size, PointI box_pos, PointI box_size,
-        PointI* final_pos, PointI* final_size);
-bool do_input_uint(uint64_t* input_number, Padding padding, int size, int width, int height);
+bool do_button(const char* text, Padding padding, int size, PointI button_pos, PointI button_size,
+        int roundness, uint32_t color);
+bool do_textbox(const char *text, Padding padding, int text_padding, Alignment alignment,
+        PointI char_size, uint32_t color, PointI box_pos, PointI box_size, PointI* final_pos,
+        PointI* final_size, bool clickable);
+void do_input_uint(uint64_t* input_number, Padding padding, int text_size, PointI box_size);
+void do_dropdown(int* cur_val, const char* enum_string[], int num_options, Padding padding,
+        int text_size);
 
 #endif // UI_H

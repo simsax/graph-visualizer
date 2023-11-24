@@ -5,7 +5,6 @@
 #include "render.h"
 #include "graph.h"
 
-#define BACKGROUND_COLOR 0xFF111111
 #define VERTEX_COLOR COLOR7
 #define SELECTED_VERTEX_COLOR COLOR7L
 #define EDGE_COLOR COLOR10
@@ -163,9 +162,8 @@ void render_text(const char* text, PointI position, float size) {
     }
 }
 
-void render_button(const char* text, bool is_hot, bool is_active, PointI start_position,
-        PointI text_size, PointI button_size) {
-    uint32_t color = COLOR6;
+void render_button(const char* text, bool is_hot, bool is_active, PointI position,
+        PointI text_size, PointI button_size, int roundness, uint32_t color) {
     if (is_active && is_hot) {
         // clicking inside the button
         float shrinkage = 0.95;
@@ -175,25 +173,55 @@ void render_button(const char* text, bool is_hot, bool is_active, PointI start_p
         button_size.y *= shrinkage;
         text_size.x *= shrinkage;
         text_size.y *= shrinkage;
-        start_position.x += (prev_size.x - button_size.x) * 0.5;
-        start_position.y += (prev_size.y - button_size.y) * 0.5;
+        position.x += (prev_size.x - button_size.x) * 0.5;
+        position.y += (prev_size.y - button_size.y) * 0.5;
     }
     else if (is_hot)
         color = mult_color(color, 1.5);
 
-    PointI text_position = { start_position.x + (button_size.x - text_size.x) * 0.5,
-        start_position.y + (button_size.y - text_size.y) * 0.5, };
-    PointI end_position = { start_position.x + button_size.x, start_position.y + button_size.y };
-    roundedBoxColor(renderer, start_position.x, start_position.y, end_position.x, end_position.y,
-            10, color);   
+    PointI text_position = { position.x + (button_size.x - text_size.x) * 0.5,
+        position.y + (button_size.y - text_size.y) * 0.5, };
+    PointI end_position = { position.x + button_size.x, position.y + button_size.y };
+    roundedBoxColor(renderer, position.x, position.y, end_position.x, end_position.y,
+            roundness, color);   
     render_text(text, text_position, text_size.y);
 }
 
-void render_textbox(const char* text, PointI position, PointI box_size, PointI text_size) {
+void render_textbox(const char* text, bool is_hot, bool is_active, PointI position, PointI box_size,
+        PointI text_size, uint32_t color, Alignment alignment, int text_padding) {
+    if (is_active && is_hot) {
+        // clicking inside the box
+        color = mult_color(color, 1.2);
+    }
+    else if (is_hot)
+        color = mult_color(color, 1.5);
     PointI end_position = { position.x + box_size.x, position.y + box_size.y };
-    PointI text_position = { position.x + (box_size.x - text_size.x) * 0.5,
-        position.y + (box_size.y - text_size.y) * 0.5, };
-    uint32_t box_color = 0xFF222222;
+    PointI text_position;
+    switch (alignment) {
+        case CENTER_ALIGNMENT:
+            text_position = (PointI) {
+                position.x + (box_size.x - text_size.x) * 0.5,
+                position.y + (box_size.y - text_size.y) * 0.5 
+            };
+            break;
+        case LEFT_ALIGNMENT:
+            text_position = (PointI) {
+                position.x + text_padding,
+                position.y + (box_size.y - text_size.y) * 0.5 
+            };
+            break;
+        case RIGHT_ALIGNMENT:
+            text_position = (PointI) {
+                position.x + (box_size.x - text_size.x) - text_padding,
+                position.y + (box_size.y - text_size.y) * 0.5 
+            };
+            break;
+        default:
+            fprintf(stderr, "Alignment value not supported: %d\n", alignment);
+            exit(EXIT_FAILURE);
+            break;
+    }
+    uint32_t box_color = color; 
     boxColor(renderer, position.x, position.y, end_position.x, end_position.y, box_color);
     render_text(text, text_position, text_size.y);
 }

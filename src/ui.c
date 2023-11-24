@@ -6,8 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// TODO: add scrollbar when items overflow in a group
-
 static Ui ui;
 
 void init_ui(void) {
@@ -16,6 +14,7 @@ void init_ui(void) {
   ui.mouse_position = (PointI){0, 0};
   ui.mouse_down = NO_BUTTON;
   ui.mouse_up = NO_BUTTON;
+  ui.dropdown_open = false;
 }
 
 static Group *peek_group(void) {
@@ -177,7 +176,8 @@ static void update_layout(Group* group, PointI* start_pos, PointI* end_pos, Poin
     }
 }
 
-bool do_button(const char *text, Padding padding, int size, PointI button_pos, PointI button_size) {
+bool do_button(const char *text, Padding padding, int size, PointI button_pos, PointI button_size,
+        int roundness, uint32_t color) {
     // size is the pixel height of the text
     ui.id_count++;
     ui_id button_id = ui.id_count;
@@ -225,7 +225,8 @@ bool do_button(const char *text, Padding padding, int size, PointI button_pos, P
     }
 
     // TODO: make it graphics API agnostic
-    render_button(text, hot, active, start_position, (PointI){text_width, size}, button_size);
+    render_button(text, hot, active, start_position, (PointI){text_width, size}, button_size, 
+            roundness, color);
     return result;
 }
 
@@ -235,22 +236,18 @@ void mouse_down(MouseButton button) { ui.mouse_down = button; }
 
 void mouse_up(MouseButton button) { ui.mouse_up = button; }
 
-void do_textbox(const char *text, Padding padding, int size, PointI box_pos, PointI box_size,
-        PointI* final_pos, PointI* final_size) {
-    // TODO: refactor this shit
+bool do_textbox(const char *text, Padding padding, int text_padding, Alignment alignment,
+        PointI char_size, uint32_t color, PointI box_pos, PointI box_size,
+        PointI* final_pos, PointI* final_size, bool clickable) {
     Group *group = peek_group();
     PointI start_position = group->next_item_position;
 
-    *final_size = (PointI){box_size.x, box_size.y};
-    float scaling_factor = (float)size / FONT_OFFSET_Y;
-    int char_width = scaling_factor * FONT_OFFSET_X;
     size_t text_len = strlen(text);
-    int text_width = text_len * char_width;
-    int text_padding = 4;
-    if (final_size->x == 0)
-        final_size->x = text_padding * 2 + text_width;
-    if (final_size->y == 0)
-        final_size->y = text_padding * 2 + size;
+    int text_width = text_len * char_size.x;
+    if (box_size.x == 0)
+        box_size.x = text_padding * 2 + text_width;
+    if (box_size.y == 0)
+        box_size.y = text_padding * 2 + char_size.y;
 
     PointI end_position;
 
@@ -261,35 +258,141 @@ void do_textbox(const char *text, Padding padding, int size, PointI box_pos, Poi
                 box_pos.y + box_size.y
         };
     } else {
-        update_layout(group, &start_position, &end_position, *final_size, padding);
+        update_layout(group, &start_position, &end_position, box_size, padding);
     }
-    *final_pos = start_position;
 
-    render_textbox(text, start_position, *final_size, (PointI) {text_width, size});
+    if (final_size != NULL) {
+        *final_size = box_size;
+    }
+    if (final_pos != NULL) {
+        *final_pos = start_position;
+    }
+
+    bool result = false;
+    bool hot = false;
+    bool active = false;
+    if (clickable) {
+        ui.id_count++;
+        ui_id item_id = ui.id_count;
+        hot = is_hot(item_id);
+        active = is_active(item_id);
+
+        if (active && ui.mouse_up == LEFT_BUTTON) {
+            if (hot) {
+                result = true;
+            }
+            ui.active_item = 0;
+        } else if (hot && ui.mouse_down == LEFT_BUTTON) {
+            ui.active_item = item_id;
+        }
+
+        Aabb item_aabb = {start_position.x, end_position.x, start_position.y,
+            end_position.y};
+        if (intersect_point(&item_aabb, ui.mouse_position)) {
+            ui.hot_item = item_id;
+        } else if (hot) {
+            ui.hot_item = 0;
+        }
+    }
+
+    render_textbox(text, hot, active, start_position, box_size, (PointI) {text_width, char_size.y}, color,
+            alignment, text_padding);
+    return result;
 }
 
-bool do_input_uint(uint64_t* input_number, Padding padding, int size, int width, int height) {
-    char number_string[256];
+void do_input_uint(uint64_t* input_number, Padding padding, int text_size, PointI box_size) {
+    char number_string[8];
     // add 0 padding or just make the textbox fixed width
     snprintf(number_string, sizeof number_string, "%02zu", *input_number);
 
     // TODO: find prettier solution; change button size
     PointI box_pos;
-    PointI box_size;
-    do_textbox(number_string, padding, size, (PointI) {-1, -1}, (PointI) {0, 0}, &box_pos, &box_size);
+    do_textbox(number_string, padding, 4, CENTER_ALIGNMENT, CHAR_SIZE(text_size), 0xFF222222, (PointI) {-1, -1},
+            (PointI) {0, 0}, &box_pos, &box_size, false);
     PointI button_size = {
-        box_size.x / 2,
+        box_size.y / 2,
         box_size.y / 2,
     };
     PointI pos_plus = (PointI){box_pos.x + box_size.x, box_pos.y};
     PointI pos_minus = {pos_plus.x, pos_plus.y + button_size.y};
-    bool plus_pressed = do_button("+", padding, size * 0.5, pos_plus, button_size);
-    bool minus_pressed = do_button("-", padding, size * 0.5, pos_minus, button_size);
+    bool plus_pressed = do_button("+", padding, text_size * 0.5, pos_plus, button_size, 0, COLOR6);
+    bool minus_pressed = do_button("-", padding, text_size * 0.5, pos_minus, button_size, 0, COLOR6);
     if (plus_pressed) {
         (*input_number)++;
     }
     if (minus_pressed && *input_number > 0) {
         (*input_number)--;
     }
-    return true;
+}
+
+void do_dropdown(int* cur_val, const char* enum_string[], int num_options, Padding padding,
+        int text_size) {
+    // find a way to pass generic enum without getting that warning
+    bool user_interacted = false;
+    PointI prev_pos;
+    PointI prev_size;
+    PointI char_size = CHAR_SIZE(text_size);
+    size_t longest_string = 0;
+    int text_padding = 4;
+    uint8_t line_thickness = 2;
+    uint32_t box_color = 0xFF222222;
+    for (int i = 0; i < num_options; i++) {
+        size_t len_i = strlen(enum_string[i]);
+        if (len_i > longest_string)
+            longest_string = len_i;
+    }
+    longest_string += 2; // counts for the "> "
+    int text_width = longest_string * char_size.x;
+    PointI box_size = { text_padding * 2 + text_width, text_padding * 2 + char_size.y };
+
+    char default_string[256];
+    if (!ui.dropdown_open) {
+        // close case
+        snprintf(default_string, sizeof default_string, "> %s", enum_string[*cur_val]);
+        if (do_textbox(default_string, padding, text_padding, LEFT_ALIGNMENT, char_size, COLOR6,
+                    (PointI) {-1, -1}, box_size, NULL, NULL, true)) {
+            ui.dropdown_open = !ui.dropdown_open;
+            user_interacted = true;
+        }
+    } else {
+        // open case
+        bool arrow_pressed = do_textbox("v", padding, text_padding, LEFT_ALIGNMENT, char_size,
+                box_color, (PointI) {-1, -1}, box_size, &prev_pos, &prev_size, true);
+        int next_y = prev_pos.y + prev_size.y + 1;
+        render_line(
+                (PointI) {prev_pos.x, next_y },
+                (PointI) {prev_pos.x + box_size.x, next_y },
+                line_thickness, COLOR7);
+        prev_pos.y += line_thickness;
+        if (arrow_pressed) {
+            ui.dropdown_open = !ui.dropdown_open;
+            user_interacted = true;
+        } else {
+            for (int i = 0; i < num_options; i++) {
+                uint32_t textbox_color = i == *cur_val ? COLOR6 : 0xFF222222;
+                bool item_selected = do_textbox(enum_string[i], padding, text_padding,
+                        LEFT_ALIGNMENT, char_size, textbox_color,
+                        (PointI) {prev_pos.x, prev_pos.y + prev_size.y}, box_size,
+                        &prev_pos, &prev_size, i != *cur_val);
+                int next_y = prev_pos.y + prev_size.y + 1;
+                if (i != num_options - 1) {
+                    render_line(
+                            (PointI) {prev_pos.x, next_y},
+                            (PointI) {prev_pos.x + box_size.x, next_y},
+                            line_thickness, COLOR7);
+                    prev_pos.y += line_thickness;
+                }
+                if (item_selected) {
+                    *cur_val = i;
+                    ui.dropdown_open = !ui.dropdown_open;
+                    user_interacted = true;
+                }
+            }
+        }
+    }
+
+    // user has clicked outside the widget, so it should close
+    if (!user_interacted && ui.mouse_up == LEFT_BUTTON) {
+        ui.dropdown_open = false;
+    }
 }

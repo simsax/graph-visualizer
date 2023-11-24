@@ -2,6 +2,7 @@
 #define RENDER_H
 
 #include "common.h"
+#include "ui.h"
 
 // 0xAABBGGRR
 #define R(hex) hex >> (0 * 8) & 0xFF
@@ -41,6 +42,8 @@
 #define COLOR9 0xFFAC8071
 #define COLOR10 0xFFDBD0A8
 
+#define BACKGROUND_COLOR 0xFF111111
+
 #define FONT_OFFSET_X 7
 #define FONT_OFFSET_Y 9
 
@@ -60,9 +63,10 @@ void render_graph(Graph* graph, bool use_label);
 void render_line(PointI a, PointI b, uint8_t thickness, uint32_t color);
 void render_rect(PointI a, PointI b, uint32_t color);
 void render_text(const char* text, PointI position, float size);
-void render_textbox(const char* text, PointI position, PointI box_size, PointI text_size);
-void render_button(const char* text, bool is_hot, bool is_active, PointI start_position,
-        PointI text_size, PointI button_size);
+void render_textbox(const char* text, bool is_hot, bool is_active, PointI position, PointI box_size, PointI text_size,
+        uint32_t color, Alignment alignment, int text_padding);
+void render_button(const char* text, bool is_hot, bool is_active, PointI position,
+        PointI text_size, PointI button_size, int roundness, uint32_t color);
 
 extern SDL_Renderer* renderer;
 

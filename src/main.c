@@ -28,6 +28,11 @@ int main(void)
     init_ui();
     uint64_t current = SDL_GetPerformanceCounter();
     uint64_t last = 0;
+    const char* config_string[] = {
+        FOREACH_CONFIG(GENERATE_STRING)
+    };
+
+    GraphConfig config = COMPLETE_CONFIG;
     while (simulation_state != QUIT_STATE) {
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
@@ -94,25 +99,35 @@ int main(void)
                         .right = 0
                     };
 
-                    Padding text_padding = {
-                        .top = 0,
-                        .bottom = 0,
-                        .left = 0,
-                        .right = 0
-                    };
+                    Padding group_padding = { 100, 0, 20, 20 };
+                    Padding zero_padding = { 0, 0, 0, 0 };
+                    Padding text_padding = zero_padding;
 
-                    int text_size = 69;
+                    int text_size = 60;
                     int button_width = 300;
                     int button_height = 90;
                     int n_buttons = 2;
                     int layout_padding_top = 
                         n_buttons * (button_height + button_padding.top + button_padding.bottom);
+
+
                     begin_ui(HORIZONTAL_LAYOUT, CENTER_ALIGNMENT, 
                             /* (Padding) { (SCREEN_HEIGHT - layout_padding_top) * 0.5, 0, 0, 0 }, */
-                            (Padding) { 0, 0, 0, 0 },
+                            zero_padding,
                             (PointI) { SCREEN_WIDTH, SCREEN_HEIGHT }, (PointI) {0, 0});
-                    /* do_textbox("69", text_padding, text_size, 0, 0); */
-                    do_input_uint(&graph.n_nodes, text_padding, text_size, 0, 0);
+
+                    begin_group(VERTICAL_LAYOUT, RIGHT_ALIGNMENT, group_padding, 0.5);
+                    do_textbox("Num vertices", button_padding, 4, CENTER_ALIGNMENT,
+                            CHAR_SIZE(text_size), BACKGROUND_COLOR, (PointI){-1,-1},
+                            (PointI){0,0}, NULL, NULL, false);
+                    do_textbox("Config", button_padding, 4, CENTER_ALIGNMENT,
+                            CHAR_SIZE(text_size), BACKGROUND_COLOR, (PointI){-1,-1},
+                            (PointI){0,0}, NULL, NULL, false);
+                    end_group();
+                    begin_group(VERTICAL_LAYOUT, LEFT_ALIGNMENT, group_padding, 0.5);
+                    do_input_uint(&graph.n_nodes, button_padding, text_size, (PointI) { 0, 0 });
+                    do_dropdown(&config, config_string, BAZ + 1, button_padding, text_size);
+                    end_group();
                     // update_graph (destroy old one, make new? Or better, don't create
                     // new shit until user presses start. When going back to main menu, destroy
                     // old graph(?))
