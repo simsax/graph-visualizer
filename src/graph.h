@@ -9,9 +9,6 @@
 #define FOREACH_CONFIG(ACTION) \
     ACTION(RANDOM_CONFIG) \
     ACTION(COMPLETE_CONFIG) \
-    ACTION(FOO_CONFIG) \
-    ACTION(BAR_CONFIG) \
-    ACTION(BAZ) \
 
 #define GENERATE_ENUM(ENUM) ENUM,
 #define GENERATE_STRING(ENUM) #ENUM,
@@ -47,13 +44,15 @@ typedef struct Graph {
     bool directed;
     size_t n_edges;
     size_t n_nodes;
+    GraphConfig config;
     Node* nodes;
     EdgeNode** adj_list;
 } Graph;
 
 extern State simulation_state;
 
-void init_graph(Graph* graph, GraphConfig config, bool directed, size_t num_vertices, int node_radius);
+void init_graph(Graph* graph, bool directed, size_t num_vertices, int node_radius);
+void generate_graph(Graph* graph);
 void free_graph(Graph* graph);
 void update_graph(Graph* graph, double delta_time);
 bool exists_edge(Graph* graph, size_t v1, size_t v2);

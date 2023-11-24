@@ -1,4 +1,5 @@
 #include "graph.h"
+#include <assert.h>
 
 State simulation_state = MENU_STATE;
 static bool dragging = false;
@@ -151,8 +152,7 @@ static void generate_nodes_positions_random(Graph* graph)
     }
 }
 
-void init_graph(
-    Graph* graph, GraphConfig config, bool directed, size_t num_vertices, int node_radius)
+void init_graph(Graph* graph, bool directed, size_t num_vertices, int node_radius)
 {
     if (num_vertices == 0) {
         fprintf(stderr, "Cannot generate a graph with 0 vertices.\n");
@@ -164,11 +164,15 @@ void init_graph(
     graph->n_nodes = num_vertices;
     graph->node_radius = node_radius;
     graph->colliding_vertex = -1;
+    graph->config = COMPLETE_CONFIG;
+}
 
+void generate_graph(Graph* graph) {
+    graph->n_edges = 0;
     init_adj_list(graph);
     generate_nodes(graph);
 
-    switch (config) {
+    switch (graph->config) {
     case RANDOM_CONFIG:
         generate_random_edges(graph);
         break;
@@ -190,7 +194,8 @@ void free_graph(Graph* graph)
 {
     free(graph->nodes);
     for (size_t i = 0; i < graph->n_nodes; i++) {
-        for (EdgeNode* node = graph->adj_list[i]; node != NULL;) {
+        EdgeNode* node = graph->adj_list[i];
+        while (node != NULL) {
             EdgeNode* temp = node;
             node = node->next;
             free(temp);

@@ -23,7 +23,7 @@ int main(void)
     init_renderer();
 
     Graph graph;
-    init_graph(&graph, COMPLETE_CONFIG, false, N_VERTICES, 8);
+    init_graph(&graph, false, N_VERTICES, 6);
 
     init_ui();
     uint64_t current = SDL_GetPerformanceCounter();
@@ -32,7 +32,6 @@ int main(void)
         FOREACH_CONFIG(GENERATE_STRING)
     };
 
-    GraphConfig config = COMPLETE_CONFIG;
     while (simulation_state != QUIT_STATE) {
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
@@ -99,7 +98,7 @@ int main(void)
                         .right = 0
                     };
 
-                    Padding group_padding = { 100, 0, 20, 20 };
+                    Padding group_padding = { 20, 20, 20, 20 };
                     Padding zero_padding = { 0, 0, 0, 0 };
                     Padding text_padding = zero_padding;
 
@@ -110,36 +109,41 @@ int main(void)
                     int layout_padding_top = 
                         n_buttons * (button_height + button_padding.top + button_padding.bottom);
 
-
-                    begin_ui(HORIZONTAL_LAYOUT, CENTER_ALIGNMENT, 
+                    begin_ui(VERTICAL_LAYOUT, CENTER_ALIGNMENT, 
                             /* (Padding) { (SCREEN_HEIGHT - layout_padding_top) * 0.5, 0, 0, 0 }, */
                             zero_padding,
                             (PointI) { SCREEN_WIDTH, SCREEN_HEIGHT }, (PointI) {0, 0});
 
+                    begin_group(HORIZONTAL_LAYOUT, CENTER_ALIGNMENT, group_padding, 0.5);
                     begin_group(VERTICAL_LAYOUT, RIGHT_ALIGNMENT, group_padding, 0.5);
-                    do_textbox("Num vertices", button_padding, 4, CENTER_ALIGNMENT,
+                    PointI largest_textbox_size;
+                    do_textbox("Num vertices", button_padding, 4, LEFT_ALIGNMENT,
                             CHAR_SIZE(text_size), BACKGROUND_COLOR, (PointI){-1,-1},
-                            (PointI){0,0}, NULL, NULL, false);
-                    do_textbox("Config", button_padding, 4, CENTER_ALIGNMENT,
+                            (PointI){0,0}, NULL, &largest_textbox_size, false);
+                    do_textbox("Config", button_padding, 4, LEFT_ALIGNMENT,
                             CHAR_SIZE(text_size), BACKGROUND_COLOR, (PointI){-1,-1},
-                            (PointI){0,0}, NULL, NULL, false);
+                            largest_textbox_size, NULL, NULL, false);
                     end_group();
                     begin_group(VERTICAL_LAYOUT, LEFT_ALIGNMENT, group_padding, 0.5);
-                    do_input_uint(&graph.n_nodes, button_padding, text_size, (PointI) { 0, 0 });
-                    do_dropdown(&config, config_string, BAZ + 1, button_padding, text_size);
+                    do_input_uint(&(graph.n_nodes), button_padding, text_size, (PointI) { 0, 0 });
+                    do_dropdown(&(graph.config), config_string, COMPLETE_CONFIG + 1, button_padding, text_size);
                     end_group();
-                    // update_graph (destroy old one, make new? Or better, don't create
-                    // new shit until user presses start. When going back to main menu, destroy
-                    // old graph(?))
-                    
-                    /* if (do_button("Start", button_padding, text_size, button_width, button_height)) { */
-                    /*     simulation_state = RUNNING_STATE; */
-                    /* } */
-                    /* if (do_button("Quit", button_padding, text_size, button_width, button_height)) { */
-                    /*     simulation_state = QUIT_STATE; */
-                    /* } */
+                    end_group();
+
+                    begin_group(VERTICAL_LAYOUT, CENTER_ALIGNMENT, group_padding, 0.5);
+                    if (do_button("Start", button_padding, text_size, (PointI) {-1,-1},
+                                (PointI) {button_width, button_height}, 10, COLOR6)) {
+                        generate_graph(&graph);
+                        simulation_state = RUNNING_STATE;
+                    }
+                    if (do_button("Quit", button_padding, text_size, (PointI) {-1,-1},
+                                (PointI) {button_width, button_height}, 10, COLOR6)) {
+                        simulation_state = QUIT_STATE;
+                    }
+                    end_group();
+
                     end_ui();
-                    /* render_text("Hello World!", (PointI) { 0, 0 }, 18); */
+                    // when hitting esc, you can either resume or go to menu
                     break;
                 }
             case RUNNING_STATE:
@@ -153,13 +157,14 @@ int main(void)
         }
 
 #if DEBUG_UI
-        render_line((PointI) {960, 0}, (PointI) {960, 1080}, 1, RED);
-        render_line((PointI) {0, 540}, (PointI) {1920, 540}, 1, RED);
+        render_line((PointI) {SCREEN_WIDTH / 2, 0}, (PointI) {SCREEN_WIDTH / 2, SCREEN_HEIGHT},
+                1, RED);
+        render_line((PointI) {0, SCREEN_HEIGHT / 2}, (PointI) {SCREEN_WIDTH, SCREEN_HEIGHT / 2},
+                1, RED);
 #endif
 
         SDL_RenderPresent(renderer);
     }
-    free_graph(&graph);
     free_renderer();
     free_window();
     SDL_Quit();
