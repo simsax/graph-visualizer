@@ -60,7 +60,7 @@ static void generate_complete_graph_undirected(Graph* graph)
 static void generate_random_undirected(Graph* graph)
 {
     size_t n_vertices = graph->n_nodes;
-    int max_vertex_degree = 3;
+    /* int max_vertex_degree = 3; */
     float edge_probability = 0.4f;
     // array of nodes counter, stop iterating when counter is over a given threshold
     int* vertex_degree = calloc(n_vertices, sizeof(int));
@@ -71,9 +71,9 @@ static void generate_random_undirected(Graph* graph)
 
     for (size_t i = 0; i < n_vertices; i++) {
         for (size_t j = i + 1; j < n_vertices; j++) {
-            if (vertex_degree[i] >= max_vertex_degree)
+            if (vertex_degree[i] >= graph->max_vertex_degree)
                 break;
-            if (vertex_degree[j] >= max_vertex_degree)
+            if (vertex_degree[j] >= graph->max_vertex_degree)
                 continue;
             if (rand_uniform() < edge_probability) {
                 vertex_degree[i]++;
@@ -86,7 +86,7 @@ static void generate_random_undirected(Graph* graph)
     free(vertex_degree);
 }
 
-static void print_adj_lsit(Graph* graph)
+static void print_adj_list(Graph* graph)
 {
     for (size_t i = 0; i < graph->n_nodes; i++) {
         printf("Node %zu: ", i);
@@ -165,6 +165,7 @@ void init_graph(Graph* graph, bool directed, size_t num_vertices, int node_radiu
     graph->node_radius = node_radius;
     graph->colliding_vertex = -1;
     graph->config = COMPLETE_CONFIG;
+    graph->max_vertex_degree = 3;
 }
 
 void generate_graph(Graph* graph) {

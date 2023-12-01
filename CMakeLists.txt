@@ -8,7 +8,7 @@ set(CMAKE_C_STANDARD 11)
 
 # check the submodules
 if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/sdl_image/CMakeLists.txt")
-    message(FATAL_ERROR "The sdl2_ttf submodule was not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+    message(FATAL_ERROR "The sdl_image submodule was not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
 
 add_executable(${PROJECT_NAME}
@@ -18,6 +18,7 @@ add_executable(${PROJECT_NAME}
     src/graph.c
     src/physics.c
     src/ui.c
+    src/algorithms.c
 )
 
 add_subdirectory(extern/sdl2_gfx)

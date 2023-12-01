@@ -5,6 +5,7 @@
 
 #define MAX_BUTTONS 5
 #define MAX_GROUPS 16
+#define MAX_TEXTBOXES 64
 
 #define CHAR_SIZE(size) ((PointI) { (size) * FONT_OFFSET_X / FONT_OFFSET_Y, (size) })
 
@@ -44,6 +45,27 @@ typedef struct Group {
     Layout layout;
 } Group;
 
+/* typedef struct { */
+/*     const char* text; */
+/*     PointI position; */
+/*     uint32_t color; */
+/* } TextboxData; */
+
+typedef struct {
+    ui_id dropdown_open;
+    PointI base_pos;
+    PointI base_size;
+    PointI char_size;
+    Padding padding;
+    int text_padding;
+    Alignment alignment;
+    int num_options;
+    int* cur_val;
+    const char** enum_string;
+    /* size_t deferred_textbox_count; */
+    /* TextboxData deferred_textboxes[MAX_TEXTBOXES]; */
+} Dropdown;
+
 typedef struct {
     ui_id active_item;
     ui_id hot_item;
@@ -51,11 +73,10 @@ typedef struct {
     MouseButton mouse_down;
     MouseButton mouse_up; 
     ui_id id_count;
-    bool dropdown_open;
     size_t group_count;
     Group groups[MAX_GROUPS];
+    Dropdown dropdown;
 } Ui;
-
 
 void init_ui(void);
 void begin_ui(Layout layout, Alignment alignment, Padding padding, PointI size, PointI starting_pos);

@@ -9,106 +9,160 @@
 static Ui ui;
 
 void init_ui(void) {
-  ui.active_item = 0;
-  ui.hot_item = 0;
-  ui.mouse_position = (PointI){0, 0};
-  ui.mouse_down = NO_BUTTON;
-  ui.mouse_up = NO_BUTTON;
-  ui.dropdown_open = false;
+    ui.active_item = 0;
+    ui.hot_item = 0;
+    ui.mouse_position = (PointI){0, 0};
+    ui.mouse_down = NO_BUTTON;
+    ui.mouse_up = NO_BUTTON;
+    ui.dropdown.dropdown_open = 0;
+    ui.dropdown.num_options = 0;
+    ui.group_count = 0;
 }
 
 static Group *peek_group(void) {
-  assert(ui.group_count > 0);
-  return &ui.groups[ui.group_count - 1];
+    assert(ui.group_count > 0);
+    return &ui.groups[ui.group_count - 1];
 }
 
 static Group *peek_parent_group(void) {
-  assert(ui.group_count > 1);
-  return &ui.groups[ui.group_count - 2];
+    assert(ui.group_count > 1);
+    return &ui.groups[ui.group_count - 2];
+}
+
+static void reset_dropdown(void) {
+    ui.dropdown.dropdown_open = 0;
+    ui.dropdown.num_options = 0;
 }
 
 void end_group(void) {
-  assert(ui.group_count > 0);
-  ui.group_count--;
+    assert(ui.group_count > 0);
+    ui.group_count--;
 }
 
 void begin_ui(Layout layout, Alignment alignment, Padding padding, PointI size,
-              PointI starting_pos) {
-  ui.id_count = 0;
-  begin_group(layout, alignment, padding, 1);
-  size.x = size.x - padding.left - padding.right;
-  size.y = size.y - padding.top - padding.bottom;
+        PointI starting_pos) {
+    ui.id_count = 0;
+    begin_group(layout, alignment, padding, 1);
+    size.x = size.x - padding.left - padding.right;
+    size.y = size.y - padding.top - padding.bottom;
 
-  Group *root = peek_group();
-  root->next_item_position.x += starting_pos.x;
-  root->next_item_position.y += starting_pos.y;
-  root->size = size;
+    Group *root = peek_group();
+    root->next_item_position.x += starting_pos.x;
+    root->next_item_position.y += starting_pos.y;
+    root->size = size;
 
 #if DEBUG_UI
-  render_rect(root->next_item_position,
-              (PointI){root->next_item_position.x + size.x,
-                       root->next_item_position.y + size.y},
-              YELLOW);
+    render_rect(root->next_item_position,
+            (PointI){root->next_item_position.x + size.x,
+            root->next_item_position.y + size.y},
+            YELLOW);
 #endif
 }
 
+static void handle_dropdown(void) {
+    PointI prev_pos = ui.dropdown.base_pos;
+    PointI box_size = ui.dropdown.base_size;
+    PointI char_size = ui.dropdown.char_size;
+    Padding padding = ui.dropdown.padding;
+    int text_padding = ui.dropdown.text_padding;
+    Alignment alignment = ui.dropdown.alignment;
+    int num_options = ui.dropdown.num_options;
+    const char** enum_string = ui.dropdown.enum_string;
+    int* cur_val = ui.dropdown.cur_val;
+    uint8_t line_thickness = 2;
+    bool user_interacted = false;
+
+    if (ui.dropdown.dropdown_open != 0 && num_options > 0) {
+        int next_y = prev_pos.y + box_size.y + 1;
+        render_line(
+                (PointI) {prev_pos.x, next_y },
+                (PointI) {prev_pos.x + box_size.x, next_y },
+                line_thickness, COLOR7);
+        prev_pos.y += line_thickness;
+        for (int i = 0; i < num_options; i++) {
+            uint32_t textbox_color = i == *cur_val ? COLOR6 : 0xFF222222;
+            bool item_selected = do_textbox(enum_string[i], padding, text_padding,
+                    alignment, char_size, textbox_color,
+                    (PointI) {prev_pos.x, prev_pos.y + box_size.y}, box_size,
+                    &prev_pos, NULL, true);
+            int next_y = prev_pos.y + box_size.y + 1;
+            if (i != num_options - 1) {
+                render_line(
+                        (PointI) {prev_pos.x, next_y},
+                        (PointI) {prev_pos.x + box_size.x, next_y},
+                        line_thickness, COLOR7);
+                prev_pos.y += line_thickness;
+            }
+            if (item_selected) {
+                *cur_val = i;
+                reset_dropdown();
+                user_interacted = true;
+            }
+        }
+        if (!user_interacted && ui.mouse_up == LEFT_BUTTON) {
+            reset_dropdown();
+        }
+    }
+}
+
 void end_ui(void) {
-  ui.mouse_down = NO_BUTTON;
-  ui.mouse_up = NO_BUTTON;
-  end_group();
+    handle_dropdown();
+    ui.mouse_down = NO_BUTTON;
+    ui.mouse_up = NO_BUTTON;
+    end_group();
 }
 
 void begin_group(Layout layout, Alignment alignment, Padding padding,
-                 float fill_perc) {
-  size_t n_groups = ui.group_count;
-  assert(n_groups < MAX_GROUPS);
-  if ((alignment == LEFT_ALIGNMENT || alignment == RIGHT_ALIGNMENT) &&
-      layout == HORIZONTAL_LAYOUT) {
-    fprintf(stderr,
-            "Left/Right alignments are supported only in a vertical layout\n");
-    exit(EXIT_FAILURE);
-  }
-  if ((alignment == TOP_ALIGNMENT || alignment == BOTTOM_ALIGNMENT) &&
-      layout == VERTICAL_LAYOUT) {
-    fprintf(
-        stderr,
-        "Top/Bottom alignments are supported only in a horizontal layout\n");
-    exit(EXIT_FAILURE);
-  }
-  Group *parent = NULL;
-  PointI next_item_position = (PointI){0, 0};
-  PointI size = (PointI){0, 0};
-  if (n_groups > 0) {
-    parent = peek_group();
-    next_item_position = parent->next_item_position;
-    size = parent->size;
-    if (parent->layout == HORIZONTAL_LAYOUT) {
-      size.x *= fill_perc;
-      // parent doesn't care about children groups internal padding
-      parent->next_item_position.x += size.x;
-    } else {
-      size.y *= fill_perc;
-      parent->next_item_position.y += size.y;
+        float fill_perc) {
+    size_t n_groups = ui.group_count;
+    assert(n_groups < MAX_GROUPS);
+    if ((alignment == LEFT_ALIGNMENT || alignment == RIGHT_ALIGNMENT) &&
+            layout == HORIZONTAL_LAYOUT) {
+        fprintf(stderr,
+                "Left/Right alignments are supported only in a vertical layout\n");
+        exit(EXIT_FAILURE);
     }
-  }
-  size.x = size.x - padding.left - padding.right;
-  size.y = size.y - padding.top - padding.bottom;
-  next_item_position.x += padding.left;
-  next_item_position.y += padding.top;
-  ui.groups[n_groups] = (Group){.next_item_position = next_item_position,
-                                .layout = layout,
-                                .alignment = alignment,
-                                .padding = padding,
-                                .size = size};
-  ui.group_count++;
+    if ((alignment == TOP_ALIGNMENT || alignment == BOTTOM_ALIGNMENT) &&
+            layout == VERTICAL_LAYOUT) {
+        fprintf(
+                stderr,
+                "Top/Bottom alignments are supported only in a horizontal layout\n");
+        exit(EXIT_FAILURE);
+    }
+    Group *parent = NULL;
+    PointI next_item_position = (PointI){0, 0};
+    PointI size = (PointI){0, 0};
+    if (n_groups > 0) {
+        parent = peek_group();
+        next_item_position = parent->next_item_position;
+        size = parent->size;
+        if (parent->layout == HORIZONTAL_LAYOUT) {
+            size.x *= fill_perc;
+            // parent doesn't care about children groups internal padding
+            parent->next_item_position.x += size.x;
+        } else {
+            size.y *= fill_perc;
+            parent->next_item_position.y += size.y;
+        }
+    }
+    size.x = size.x - padding.left - padding.right;
+    size.y = size.y - padding.top - padding.bottom;
+    next_item_position.x += padding.left;
+    next_item_position.y += padding.top;
+    ui.groups[n_groups] = (Group){.next_item_position = next_item_position,
+        .layout = layout,
+        .alignment = alignment,
+        .padding = padding,
+        .size = size};
+    ui.group_count++;
 
 #if DEBUG_UI
-  if (n_groups > 0) {
-    render_rect(
-        next_item_position,
-        (PointI){next_item_position.x + size.x, next_item_position.y + size.y},
-        BLUE);
-  }
+    if (n_groups > 0) {
+        render_rect(
+                next_item_position,
+                (PointI){next_item_position.x + size.x, next_item_position.y + size.y},
+                BLUE);
+    }
 #endif
 }
 
@@ -198,7 +252,7 @@ bool do_button(const char *text, Padding padding, int size, PointI button_pos, P
         button_size.y = text_padding * 2 + size;
 
     PointI end_position;
-    
+
     if (button_pos.x != -1) {
         start_position = button_pos;
         end_position = (PointI) {button_pos.x + button_size.x,
@@ -271,11 +325,23 @@ bool do_textbox(const char *text, Padding padding, int text_padding, Alignment a
     bool result = false;
     bool hot = false;
     bool active = false;
+
     if (clickable) {
         ui.id_count++;
         ui_id item_id = ui.id_count;
+
         hot = is_hot(item_id);
         active = is_active(item_id);
+
+        Aabb item_aabb = {start_position.x, end_position.x, start_position.y,
+            end_position.y};
+        if (intersect_point(&item_aabb, ui.mouse_position)) {
+            ui.hot_item = item_id;
+            hot = true;
+        } else if (hot) {
+            ui.hot_item = 0;
+            hot = false;
+        }
 
         if (active && ui.mouse_up == LEFT_BUTTON) {
             if (hot) {
@@ -286,17 +352,10 @@ bool do_textbox(const char *text, Padding padding, int text_padding, Alignment a
             ui.active_item = item_id;
         }
 
-        Aabb item_aabb = {start_position.x, end_position.x, start_position.y,
-            end_position.y};
-        if (intersect_point(&item_aabb, ui.mouse_position)) {
-            ui.hot_item = item_id;
-        } else if (hot) {
-            ui.hot_item = 0;
-        }
     }
 
-    render_textbox(text, hot, active, start_position, box_size, (PointI) {text_width, char_size.y}, color,
-            alignment, text_padding);
+    render_textbox(text, hot, active, start_position, box_size,
+            (PointI) {text_width, char_size.y}, color, alignment, text_padding);
     return result;
 }
 
@@ -328,13 +387,12 @@ void do_input_uint(uint64_t* input_number, Padding padding, int text_size, Point
 void do_dropdown(int* cur_val, const char* enum_string[], int num_options, Padding padding,
         int text_size) {
     // find a way to pass generic enum without getting that warning
-    bool user_interacted = false;
-    PointI prev_pos;
-    PointI prev_size;
+    assert(num_options < MAX_TEXTBOXES);
+    ui.id_count++;
+    ui_id dropdown_id = ui.id_count;
     PointI char_size = CHAR_SIZE(text_size);
     size_t longest_string = 0;
     int text_padding = 4;
-    uint8_t line_thickness = 2;
     uint32_t box_color = 0xFF222222;
     for (int i = 0; i < num_options; i++) {
         size_t len_i = strlen(enum_string[i]);
@@ -346,53 +404,30 @@ void do_dropdown(int* cur_val, const char* enum_string[], int num_options, Paddi
     PointI box_size = { text_padding * 2 + text_width, text_padding * 2 + char_size.y };
 
     char default_string[256];
-    if (!ui.dropdown_open) {
+    if (ui.dropdown.dropdown_open != dropdown_id) {
         // close case
         snprintf(default_string, sizeof default_string, "> %s", enum_string[*cur_val]);
         if (do_textbox(default_string, padding, text_padding, LEFT_ALIGNMENT, char_size, COLOR6,
                     (PointI) {-1, -1}, box_size, NULL, NULL, true)) {
-            ui.dropdown_open = !ui.dropdown_open;
-            user_interacted = true;
+            ui.dropdown.dropdown_open = dropdown_id;
+            ui.mouse_up = NO_BUTTON;
         }
     } else {
-        // open case
         bool arrow_pressed = do_textbox("v", padding, text_padding, LEFT_ALIGNMENT, char_size,
-                box_color, (PointI) {-1, -1}, box_size, &prev_pos, &prev_size, true);
-        int next_y = prev_pos.y + prev_size.y + 1;
-        render_line(
-                (PointI) {prev_pos.x, next_y },
-                (PointI) {prev_pos.x + box_size.x, next_y },
-                line_thickness, COLOR7);
-        prev_pos.y += line_thickness;
+                box_color, (PointI) {-1, -1}, box_size, &ui.dropdown.base_pos, NULL, true);
         if (arrow_pressed) {
-            ui.dropdown_open = !ui.dropdown_open;
-            user_interacted = true;
+            reset_dropdown();
+            ui.mouse_up = NO_BUTTON;
         } else {
-            for (int i = 0; i < num_options; i++) {
-                uint32_t textbox_color = i == *cur_val ? COLOR6 : 0xFF222222;
-                bool item_selected = do_textbox(enum_string[i], padding, text_padding,
-                        LEFT_ALIGNMENT, char_size, textbox_color,
-                        (PointI) {prev_pos.x, prev_pos.y + prev_size.y}, box_size,
-                        &prev_pos, &prev_size, i != *cur_val);
-                int next_y = prev_pos.y + prev_size.y + 1;
-                if (i != num_options - 1) {
-                    render_line(
-                            (PointI) {prev_pos.x, next_y},
-                            (PointI) {prev_pos.x + box_size.x, next_y},
-                            line_thickness, COLOR7);
-                    prev_pos.y += line_thickness;
-                }
-                if (item_selected) {
-                    *cur_val = i;
-                    ui.dropdown_open = !ui.dropdown_open;
-                    user_interacted = true;
-                }
-            }
+            // open case
+            ui.dropdown.base_size = box_size;
+            ui.dropdown.char_size = char_size;
+            ui.dropdown.padding = padding;
+            ui.dropdown.text_padding = text_padding;
+            ui.dropdown.alignment = LEFT_ALIGNMENT;
+            ui.dropdown.num_options = num_options;
+            ui.dropdown.enum_string = enum_string;
+            ui.dropdown.cur_val = cur_val;
         }
-    }
-
-    // user has clicked outside the widget, so it should close
-    if (!user_interacted && ui.mouse_up == LEFT_BUTTON) {
-        ui.dropdown_open = false;
     }
 }

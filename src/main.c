@@ -4,6 +4,7 @@
 #include "render.h"
 #include "ui.h"
 #include "graph.h"
+#include "algorithms.h"
 
 #define SCREEN_WIDTH 1920
 #define SCREEN_HEIGHT 1080
@@ -24,13 +25,19 @@ int main(void)
 
     Graph graph;
     init_graph(&graph, false, N_VERTICES, 6);
+    const char* config_string[] = {
+        FOREACH_CONFIG(GENERATE_STRING)
+    };
+
+    Alg alg;
+    init_alg(&alg);
+    const char* alg_string[] = {
+        FOREACH_ALG(GENERATE_STRING)
+    };
 
     init_ui();
     uint64_t current = SDL_GetPerformanceCounter();
     uint64_t last = 0;
-    const char* config_string[] = {
-        FOREACH_CONFIG(GENERATE_STRING)
-    };
 
     while (simulation_state != QUIT_STATE) {
         SDL_Event e;
@@ -49,7 +56,10 @@ int main(void)
                     }
                     break;
                 case SDLK_m:
-                    simulation_state = MENU_STATE;
+                    if (simulation_state == RUNNING_STATE || simulation_state == PAUSED_STATE) {
+                        free_graph(&graph);
+                        simulation_state = MENU_STATE;
+                    } 
                     break;
                 default:
                     break;
@@ -84,10 +94,9 @@ int main(void)
 
         double delta_time = (double)((current - last) / (double)SDL_GetPerformanceFrequency());
 
-        update_graph(&graph, delta_time);
-
         render_background();
 
+        // i actually think i like this
         switch (simulation_state) {
             case MENU_STATE: 
                 {
@@ -100,48 +109,65 @@ int main(void)
 
                     Padding group_padding = { 20, 20, 20, 20 };
                     Padding zero_padding = { 0, 0, 0, 0 };
-                    Padding text_padding = zero_padding;
 
                     int text_size = 60;
                     int button_width = 300;
                     int button_height = 90;
-                    int n_buttons = 2;
-                    int layout_padding_top = 
-                        n_buttons * (button_height + button_padding.top + button_padding.bottom);
 
                     begin_ui(VERTICAL_LAYOUT, CENTER_ALIGNMENT, 
                             /* (Padding) { (SCREEN_HEIGHT - layout_padding_top) * 0.5, 0, 0, 0 }, */
                             zero_padding,
                             (PointI) { SCREEN_WIDTH, SCREEN_HEIGHT }, (PointI) {0, 0});
-
-                    begin_group(HORIZONTAL_LAYOUT, CENTER_ALIGNMENT, group_padding, 0.5);
-                    begin_group(VERTICAL_LAYOUT, RIGHT_ALIGNMENT, group_padding, 0.5);
-                    PointI largest_textbox_size;
-                    do_textbox("Num vertices", button_padding, 4, LEFT_ALIGNMENT,
-                            CHAR_SIZE(text_size), BACKGROUND_COLOR, (PointI){-1,-1},
-                            (PointI){0,0}, NULL, &largest_textbox_size, false);
-                    do_textbox("Config", button_padding, 4, LEFT_ALIGNMENT,
-                            CHAR_SIZE(text_size), BACKGROUND_COLOR, (PointI){-1,-1},
-                            largest_textbox_size, NULL, NULL, false);
-                    end_group();
-                    begin_group(VERTICAL_LAYOUT, LEFT_ALIGNMENT, group_padding, 0.5);
-                    do_input_uint(&(graph.n_nodes), button_padding, text_size, (PointI) { 0, 0 });
-                    do_dropdown(&(graph.config), config_string, COMPLETE_CONFIG + 1, button_padding, text_size);
-                    end_group();
-                    end_group();
-
-                    begin_group(VERTICAL_LAYOUT, CENTER_ALIGNMENT, group_padding, 0.5);
-                    if (do_button("Start", button_padding, text_size, (PointI) {-1,-1},
-                                (PointI) {button_width, button_height}, 10, COLOR6)) {
-                        generate_graph(&graph);
-                        simulation_state = RUNNING_STATE;
+                    {
+                        begin_group(HORIZONTAL_LAYOUT, CENTER_ALIGNMENT, group_padding, 0.5);
+                        {
+                            {
+                                begin_group(VERTICAL_LAYOUT, RIGHT_ALIGNMENT, group_padding, 0.5);
+                                PointI largest_textbox_size;
+                                do_textbox("Num vertices", button_padding, 4, LEFT_ALIGNMENT,
+                                        CHAR_SIZE(text_size), BACKGROUND_COLOR, (PointI){-1,-1},
+                                        (PointI){0,0}, NULL, &largest_textbox_size, false);
+                                do_textbox("Max degree", button_padding, 4, LEFT_ALIGNMENT,
+                                        CHAR_SIZE(text_size), BACKGROUND_COLOR, (PointI){-1,-1},
+                                        largest_textbox_size, NULL, NULL, false);
+                                do_textbox("Config", button_padding, 4, LEFT_ALIGNMENT,
+                                        CHAR_SIZE(text_size), BACKGROUND_COLOR, (PointI){-1,-1},
+                                        largest_textbox_size, NULL, NULL, false);
+                                do_textbox("Algorithm", button_padding, 4, LEFT_ALIGNMENT,
+                                        CHAR_SIZE(text_size), BACKGROUND_COLOR, (PointI){-1,-1},
+                                        largest_textbox_size, NULL, NULL, false);
+                                end_group();
+                            }
+                            {
+                                begin_group(VERTICAL_LAYOUT, LEFT_ALIGNMENT, group_padding, 0.5);
+                                do_input_uint(&(graph.n_nodes), button_padding, text_size,
+                                        (PointI) { 0, 0 });
+                                do_input_uint(&(graph.max_vertex_degree), button_padding, text_size,
+                                        (PointI) { 0, 0 });
+                                // TODO: dropdown should draw on top of every widget when open
+                                do_dropdown(&(graph.config), config_string, NUM_CONFIG,
+                                        button_padding, text_size);
+                                do_dropdown(&(alg.algorithm), alg_string, NUM_ALG,
+                                        button_padding, text_size);
+                                end_group();
+                            }
+                        }
+                        end_group();
                     }
-                    if (do_button("Quit", button_padding, text_size, (PointI) {-1,-1},
-                                (PointI) {button_width, button_height}, 10, COLOR6)) {
-                        simulation_state = QUIT_STATE;
-                    }
-                    end_group();
 
+                    {
+                        begin_group(VERTICAL_LAYOUT, CENTER_ALIGNMENT, group_padding, 0.5);
+                        if (do_button("Start", button_padding, text_size, (PointI) {-1,-1},
+                                    (PointI) {button_width, button_height}, 10, COLOR6)) {
+                            generate_graph(&graph);
+                            simulation_state = RUNNING_STATE;
+                        }
+                        if (do_button("Quit", button_padding, text_size, (PointI) {-1,-1},
+                                    (PointI) {button_width, button_height}, 10, COLOR6)) {
+                            simulation_state = QUIT_STATE;
+                        }
+                        end_group();
+                    }
                     end_ui();
                     // when hitting esc, you can either resume or go to menu
                     break;
@@ -149,6 +175,7 @@ int main(void)
             case RUNNING_STATE:
             case PAUSED_STATE:
                 {
+                    update_graph(&graph, delta_time);
                     render_graph(&graph, false);
                     break;
                 }

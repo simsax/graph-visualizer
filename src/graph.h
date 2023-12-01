@@ -9,6 +9,7 @@
 #define FOREACH_CONFIG(ACTION) \
     ACTION(RANDOM_CONFIG) \
     ACTION(COMPLETE_CONFIG) \
+    ACTION(NUM_CONFIG) \
 
 #define GENERATE_ENUM(ENUM) ENUM,
 #define GENERATE_STRING(ENUM) #ENUM,
@@ -19,8 +20,6 @@ typedef enum {
     PAUSED_STATE,
     MENU_STATE
 } State;
-
-// maybe I need different scenes
 
 typedef enum {
     FOREACH_CONFIG(GENERATE_ENUM)
@@ -41,6 +40,7 @@ typedef struct EdgeNode {
 typedef struct Graph {
     int colliding_vertex;
     int node_radius;
+    int max_vertex_degree;
     bool directed;
     size_t n_edges;
     size_t n_nodes;
