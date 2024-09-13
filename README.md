@@ -7,7 +7,7 @@ any algorithm.
 It was more of an exploration into graph drawing, along with an attempt to create my own immediate UI library.
 I'm unsure if I'll complete it in the future, below a video of its current state.
 
-![](graph.mp4)
+https://github.com/user-attachments/assets/e0f33e21-4404-4794-871c-d40f9c6d589c
 
 ## References
 
